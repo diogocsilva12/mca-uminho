@@ -33,19 +33,34 @@ This microservice enables visitors and students on the **MCA UMinho Portal** to 
 
 ---
 
+## 🔒 Admin Dashboard Access (`admin.html`)
+
+For maintainer management (uploading files directly to `main`, deleting files, editing calendar dates):
+
+1. Access `admin.html` (e.g. `https://diogocsilva12.github.io/mca-uminho/admin.html` or local).
+2. Enter your password:
+   - **By default**: Use the exact same `GITHUB_TOKEN` you generated.
+   - **(Optional) Custom password**: In Cloudflare Worker **Settings** &rarr; **Variables and Secrets**, add a secret named `ADMIN_PASSWORD` with any password you want (e.g. `mySecretPass123`) and click **Deploy**.
+3. In the Admin Dashboard:
+   - **File Manager**: Select course and category, drag and drop files/folders directly to `main`, or click `🗑️ Delete` next to any file.
+   - **Calendar Manager**: Edit exam dates, event titles, and categories inline, delete passed events, add new ones, and click `💾 Save All Calendar Changes to Main`.
+   - All admin changes commit directly to `main` without waiting for pull requests.
+
+---
+
 ## How it Works
 
 ```
-Student on Site (Drag & drop files or date)
-               ↓
-POST /submit-files or /submit-date
-               ↓
-Cloudflare Worker (using your secret token)
-               ↓
-1. Creates branch `contribute/files-...`
-2. Pushes files to `files/1-ano/1-semestre/<course>/<category>/...`
-3. Updates `assets/data/site-data.js`
-4. Opens Pull Request assigned to @diogocsilva12
-               ↓
-Diogo reviews and clicks "Merge pull request"
+Public Students & Visitors                    Diogo (@diogocsilva12)
+           ↓                                            ↓
+Drags file or proposes date                  Logs into admin.html
+           ↓                                            ↓
+POST /submit-files or /submit-date           POST /admin/upload-files
+           ↓                                 POST /admin/delete-file
+Cloudflare Worker (mca-contributions)        POST /admin/save-calendar
+           ↓                                            ↓
+Opens Pull Request on GitHub                 Commits directly to `main`!
+           ↓                                            ↓
+Diogo reviews and merges                     Website updates immediately!
 ```
+

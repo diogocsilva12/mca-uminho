@@ -1,21 +1,18 @@
 /**
- * MCA UMinho — Automated Pull Request Serverless Worker (Cloudflare Workers)
+ * MCA UMinho — Automated Pull Request & Admin Management Worker (Cloudflare Workers)
  * 
- * Free serverless microservice that accepts file uploads and calendar date proposals
- * directly from the website and automatically opens Pull Requests on GitHub.
+ * Free serverless microservice supporting:
+ * 1. Public Visitor Contributions: Accepts file uploads and calendar date proposals,
+ *    automatically creating branches and opening Pull Requests for review.
+ * 2. Admin Management (Diogo): Allows authenticated admin to upload files directly to main,
+ *    delete files from main, and edit/delete/reorder calendar dates in site-data.js directly.
  * 
  * SETUP INSTRUCTIONS:
- * 1. Log in to Cloudflare Dashboard (https://dash.cloudflare.com) -> Workers & Pages.
- * 2. Click "Create Application" -> "Create Worker".
- * 3. Replace the default code with the contents of this file and click "Deploy".
- * 4. Go to Worker Settings -> Variables -> Add Secret:
- *    - Variable name: GITHUB_TOKEN
- *    - Value: A GitHub Personal Access Token (classic with 'repo' scope, or fine-grained
- *             with 'Contents: Read & Write' and 'Pull requests: Read & Write'
- *             on diogocsilva12/mca-uminho).
- * 5. Copy your Worker URL (e.g. https://mca-submissions.<your-subdomain>.workers.dev).
- * 6. Set `submissionApiUrl: 'https://mca-submissions.<your-subdomain>.workers.dev'`
- *    in `assets/data/site-data.js` and push to main.
+ * 1. Cloudflare Dashboard -> Workers & Pages -> mca-contributions.
+ * 2. Edit Code -> Paste this file -> Deploy.
+ * 3. Settings -> Variables and Secrets -> GITHUB_TOKEN (your Personal Access Token).
+ * 4. (Optional) Settings -> Variables and Secrets -> ADMIN_PASSWORD (custom password for admin.html).
+ *    If ADMIN_PASSWORD is not set, your GITHUB_TOKEN serves as the admin password!
  */
 
 const REPO_OWNER = "diogocsilva12";
@@ -25,7 +22,7 @@ const BASE_BRANCH = "main";
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Admin-Key",
 };
 
 export default {
@@ -38,7 +35,7 @@ export default {
       return new Response(
         JSON.stringify({
           status: "online",
-          service: "MCA UMinho Automated Contribution Worker",
+          service: "MCA UMinho Automated Contribution & Admin Worker",
           repo: `${REPO_OWNER}/${REPO_NAME}`,
         }),
         {
@@ -87,8 +84,23 @@ export default {
     const url = new URL(request.url);
 
     try {
-      const data = await request.json();
+      const data = await request.json().catch(() => ({}));
 
+      // Admin Routes
+      if (url.pathname.endsWith("/admin/verify")) {
+        return handleAdminVerify(request, env, token);
+      }
+      if (url.pathname.endsWith("/admin/upload-files")) {
+        return await handleAdminUploadFiles(request, env, token, data);
+      }
+      if (url.pathname.endsWith("/admin/delete-file")) {
+        return await handleAdminDeleteFile(request, env, token, data);
+      }
+      if (url.pathname.endsWith("/admin/save-calendar")) {
+        return await handleAdminSaveCalendar(request, env, token, data);
+      }
+
+      // Public Visitor Routes (Creates PR)
       if (url.pathname.endsWith("/submit-date")) {
         return await handleDateSubmission(data, token);
       } else {
@@ -107,7 +119,204 @@ export default {
 };
 
 // ---------------------------------------------------------------------
-// Handler: File Uploads -> Automated PR
+// Admin Authentication Helper
+// ---------------------------------------------------------------------
+
+function isAuthorizedAdmin(request, env, token) {
+  const authHeader = request.headers.get("Authorization") || "";
+  let key = "";
+  if (authHeader.startsWith("Bearer ")) {
+    key = authHeader.substring(7).trim();
+  } else {
+    key = request.headers.get("X-Admin-Key") || "";
+  }
+
+  if (!key) return false;
+
+  // 1. Matches custom ADMIN_PASSWORD in Cloudflare
+  if (env && env.ADMIN_PASSWORD && key === env.ADMIN_PASSWORD) return true;
+
+  // 2. Matches the GITHUB_TOKEN itself
+  if (key === token) return true;
+
+  return false;
+}
+
+function handleAdminVerify(request, env, token) {
+  if (!isAuthorizedAdmin(request, env, token)) {
+    return new Response(JSON.stringify({ error: "Invalid admin password or token." }), {
+      status: 401,
+      headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
+    });
+  }
+  return new Response(JSON.stringify({ success: true, user: REPO_OWNER }), {
+    status: 200,
+    headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
+  });
+}
+
+// ---------------------------------------------------------------------
+// Admin Actions: Commit directly to main
+// ---------------------------------------------------------------------
+
+async function handleAdminUploadFiles(request, env, token, data) {
+  if (!isAuthorizedAdmin(request, env, token)) {
+    return new Response(JSON.stringify({ error: "Unauthorized." }), {
+      status: 401,
+      headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
+    });
+  }
+
+  const { year, semester, course, category, files } = data;
+  if (!files || !files.length) {
+    return new Response(JSON.stringify({ error: "No files provided." }), {
+      status: 400,
+      headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
+    });
+  }
+
+  const cleanYear = year === "2-ano" ? "2-ano" : "1-ano";
+  const cleanSem = semester === "2-semestre" ? "2-semestre" : "1-semestre";
+  const cleanCourse = (course || "aac").toLowerCase().replace(/[^a-z0-9_-]/g, "");
+  const cleanCat = (category || "teoricas").toLowerCase().replace(/[^a-z0-9_-]/g, "");
+
+  const baseSha = await getMainSha(token);
+  const treeEntries = [];
+  const uploaded = [];
+
+  for (const f of files) {
+    let cleanName = (f.name || "file").replace(/[^a-zA-Z0-9._-]/g, "_");
+    const filePath = `files/${cleanYear}/${cleanSem}/${cleanCourse}/${cleanCat}/${cleanName}`;
+
+    const blobSha = await createBlob(f.content, token); // content is base64
+    treeEntries.push({
+      path: filePath,
+      mode: "100644",
+      type: "blob",
+      sha: blobSha,
+    });
+    uploaded.push(filePath);
+  }
+
+  const treeSha = await createTree(baseSha, treeEntries, token);
+  const commitMsg = `[Admin] Upload ${uploaded.length} file(s) to ${cleanCourse.toUpperCase()} (${cleanCat})`;
+  const commitSha = await createCommit(commitMsg, treeSha, [baseSha], token);
+
+  // Directly update main reference
+  await updateBranchRef(BASE_BRANCH, commitSha, token);
+
+  return new Response(
+    JSON.stringify({
+      success: true,
+      commit_sha: commitSha,
+      files: uploaded,
+    }),
+    { status: 200, headers: { ...CORS_HEADERS, "Content-Type": "application/json" } }
+  );
+}
+
+async function handleAdminDeleteFile(request, env, token, data) {
+  if (!isAuthorizedAdmin(request, env, token)) {
+    return new Response(JSON.stringify({ error: "Unauthorized." }), {
+      status: 401,
+      headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
+    });
+  }
+
+  const { path: filePath } = data;
+  if (!filePath) {
+    return new Response(JSON.stringify({ error: "File path is required." }), {
+      status: 400,
+      headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
+    });
+  }
+
+  // Get current file sha on main
+  const fileData = await getFileContent(filePath, BASE_BRANCH, token);
+  if (!fileData || !fileData.sha) {
+    return new Response(JSON.stringify({ error: `File not found on ${BASE_BRANCH}: ${filePath}` }), {
+      status: 404,
+      headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
+    });
+  }
+
+  const commitMsg = `[Admin] Delete ${filePath}`;
+  await deleteFile(filePath, fileData.sha, commitMsg, token);
+
+  return new Response(
+    JSON.stringify({
+      success: true,
+      deleted: filePath,
+    }),
+    { status: 200, headers: { ...CORS_HEADERS, "Content-Type": "application/json" } }
+  );
+}
+
+async function handleAdminSaveCalendar(request, env, token, data) {
+  if (!isAuthorizedAdmin(request, env, token)) {
+    return new Response(JSON.stringify({ error: "Unauthorized." }), {
+      status: 401,
+      headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
+    });
+  }
+
+  const { dates } = data;
+  if (!Array.isArray(dates)) {
+    return new Response(JSON.stringify({ error: "Invalid dates array." }), {
+      status: 400,
+      headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
+    });
+  }
+
+  // Fetch current site-data.js from main
+  const fileData = await getFileContent("assets/data/site-data.js", BASE_BRANCH, token);
+  const currentJs = atob(fileData.content.replace(/\s/g, ""));
+
+  let siteDataObject;
+  try {
+    const jsonStr = currentJs.replace(/^[\s\S]*?const\s+SITE_DATA\s*=\s*/, "").replace(/;\s*$/, "");
+    siteDataObject = JSON.parse(jsonStr);
+  } catch (err) {
+    return new Response(JSON.stringify({ error: "Failed to parse site-data.js" }), {
+      status: 500,
+      headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
+    });
+  }
+
+  siteDataObject.calendar = siteDataObject.calendar || {};
+  siteDataObject.calendar.dates = dates;
+  siteDataObject.calendar.dates.sort((a, b) => (a.date < b.date ? -1 : 1));
+
+  const updatedContent = `/**
+ * SITE CONTENT — Master in Advanced Computing (MCA) - UMinho
+ * Automatically synced study materials, academic calendar, and class schedule.
+ */
+
+const SITE_DATA = ${JSON.stringify(siteDataObject, null, 2)};
+`;
+
+  const base64Content = btoa(unescape(encodeURIComponent(updatedContent)));
+  const commitMsg = `[Admin] Update academic calendar dates (${dates.length} events)`;
+
+  await updateFile(
+    "assets/data/site-data.js",
+    base64Content,
+    fileData.sha,
+    commitMsg,
+    token
+  );
+
+  return new Response(
+    JSON.stringify({
+      success: true,
+      count: dates.length,
+    }),
+    { status: 200, headers: { ...CORS_HEADERS, "Content-Type": "application/json" } }
+  );
+}
+
+// ---------------------------------------------------------------------
+// Visitor Public Handlers (Creates Pull Request)
 // ---------------------------------------------------------------------
 
 async function handleFileSubmission(data, token) {
@@ -139,11 +348,7 @@ async function handleFileSubmission(data, token) {
   const cleanCat = (category || "teoricas").toLowerCase().replace(/[^a-z0-9_-]/g, "");
 
   const branchName = `contribute/files-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
-
-  // 1. Get latest commit SHA on main
   const baseSha = await getMainSha(token);
-
-  // 2. Upload each file as a Git Blob
   const treeEntries = [];
   const uploadedFilePaths = [];
 
@@ -151,7 +356,7 @@ async function handleFileSubmission(data, token) {
     let cleanName = (f.name || "file").replace(/[^a-zA-Z0-9._-]/g, "_");
     const filePath = `files/${cleanYear}/${cleanSem}/${cleanCourse}/${cleanCat}/${cleanName}`;
 
-    const blobSha = await createBlob(f.content, token); // content is base64
+    const blobSha = await createBlob(f.content, token);
     treeEntries.push({
       path: filePath,
       mode: "100644",
@@ -161,17 +366,12 @@ async function handleFileSubmission(data, token) {
     uploadedFilePaths.push(filePath);
   }
 
-  // 3. Create Git Tree
   const treeSha = await createTree(baseSha, treeEntries, token);
-
-  // 4. Create Commit
   const commitMessage = `[Material] Add files for ${cleanCourse.toUpperCase()} (${cleanCat})`;
   const commitSha = await createCommit(commitMessage, treeSha, [baseSha], token);
 
-  // 5. Create Branch pointing to the new commit
   await createBranch(branchName, commitSha, token);
 
-  // 6. Create Pull Request
   const prTitle = `[Material] Add files for ${cleanCourse.toUpperCase()} (${cleanCat})`;
   const prBody = `## Automated Study Material Contribution
 
@@ -205,10 +405,6 @@ ${uploadedFilePaths.map((p) => `- \`${p}\``).join("\n")}
   );
 }
 
-// ---------------------------------------------------------------------
-// Handler: Calendar Date -> Automated PR
-// ---------------------------------------------------------------------
-
 async function handleDateSubmission(data, token) {
   const { date, title, type, author, notes } = data;
 
@@ -222,11 +418,9 @@ async function handleDateSubmission(data, token) {
   const branchName = `contribute/date-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
   const baseSha = await getMainSha(token);
 
-  // 1. Fetch current assets/data/site-data.js from main
   const fileData = await getFileContent("assets/data/site-data.js", BASE_BRANCH, token);
   const currentJs = atob(fileData.content.replace(/\s/g, ""));
 
-  // 2. Parse SITE_DATA JSON safely
   let siteDataObject;
   try {
     const jsonStr = currentJs.replace(/^[\s\S]*?const\s+SITE_DATA\s*=\s*/, "").replace(/;\s*$/, "");
@@ -243,7 +437,6 @@ async function handleDateSubmission(data, token) {
     siteDataObject.calendar.dates = [];
   }
 
-  // 3. Add proposed date and sort chronologically
   siteDataObject.calendar.dates.push({
     date: date.trim(),
     label: title.trim(),
@@ -259,11 +452,9 @@ async function handleDateSubmission(data, token) {
 const SITE_DATA = ${JSON.stringify(siteDataObject, null, 2)};
 `;
 
-  // 4. Create Git Blob for updated site-data.js
   const base64Content = btoa(unescape(encodeURIComponent(updatedContent)));
   const blobSha = await createBlob(base64Content, token);
 
-  // 5. Create Git Tree & Commit
   const treeSha = await createTree(baseSha, [
     {
       path: "assets/data/site-data.js",
@@ -276,10 +467,8 @@ const SITE_DATA = ${JSON.stringify(siteDataObject, null, 2)};
   const commitMessage = `[Date] ${title} (${date})`;
   const commitSha = await createCommit(commitMessage, treeSha, [baseSha], token);
 
-  // 6. Create Branch
   await createBranch(branchName, commitSha, token);
 
-  // 7. Create Pull Request
   const prTitle = `[Date] ${title} (${date})`;
   const prBody = `## Automated Academic Calendar Proposal
 
@@ -395,8 +584,53 @@ async function createBranch(branchName, sha, token) {
   );
 }
 
+async function updateBranchRef(branchName, sha, token) {
+  return await ghFetch(
+    `/git/refs/heads/${branchName}`,
+    {
+      method: "PATCH",
+      body: JSON.stringify({
+        sha: sha,
+        force: false,
+      }),
+    },
+    token
+  );
+}
+
 async function getFileContent(path, ref, token) {
   return await ghFetch(`/contents/${path}?ref=${ref}`, {}, token);
+}
+
+async function updateFile(path, base64Content, sha, message, token) {
+  return await ghFetch(
+    `/contents/${path}`,
+    {
+      method: "PUT",
+      body: JSON.stringify({
+        message: message,
+        content: base64Content,
+        sha: sha,
+        branch: BASE_BRANCH,
+      }),
+    },
+    token
+  );
+}
+
+async function deleteFile(path, sha, message, token) {
+  return await ghFetch(
+    `/contents/${path}`,
+    {
+      method: "DELETE",
+      body: JSON.stringify({
+        message: message,
+        sha: sha,
+        branch: BASE_BRANCH,
+      }),
+    },
+    token
+  );
 }
 
 async function createPullRequest(title, branch, body, token) {

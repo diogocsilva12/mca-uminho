@@ -1,0 +1,877 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admin Dashboard · MCA</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="index.html">
+      <span class="brand-mark">MCA</span>
+      <span class="brand-name">Universidade do Minho</span>
+      <span class="admin-badge">Admin</span>
+    </a>
+    <nav aria-label="Admin Navigation">
+      <ul class="nav-links">
+        <li><a href="index.html">← Public Site</a></li>
+        <li><a href="calendar.html">Calendar</a></li>
+        <li id="nav-logout-item" style="display:none;">
+          <button type="button" id="btn-logout" class="btn btn-secondary btn-sm">Log Out</button>
+        </li>
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <!-- 1. Login View -->
+  <div id="admin-login-view" class="admin-login-wrapper">
+    <div class="admin-login-card">
+      <div class="admin-login-icon">🔐</div>
+      <h2>MCA Admin Access</h2>
+      <p>Restricted area for repository maintainer (<strong>@diogocsilva12</strong>) to manage files and calendar dates directly on <code>main</code>.</p>
+
+      <form id="admin-login-form">
+        <div class="form-group" style="text-align:left; margin-bottom:14px;">
+          <label for="admin-key-input">Admin Password / GitHub Token</label>
+          <input type="password" id="admin-key-input" placeholder="Enter your password or token" required autocomplete="current-password">
+          <div style="font-size:0.75rem; color:var(--ink-faint); margin-top:4px;">
+            Enter your Cloudflare <code>ADMIN_PASSWORD</code> or your <code>GITHUB_TOKEN</code>.
+          </div>
+        </div>
+
+        <div id="login-error-msg" style="display:none; color:#b3261e; font-size:0.82rem; margin-bottom:12px; font-weight:500;"></div>
+
+        <button type="submit" id="btn-login-submit" class="btn btn-primary" style="width:100%; justify-content:center;">
+          Unlock Admin Dashboard &rarr;
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- 2. Dashboard View -->
+  <div id="admin-app-view" class="admin-dashboard-container" style="display:none;">
+    <div class="admin-header-row">
+      <div>
+        <h1 style="font-size:1.6rem; margin:0 0 4px;">Maintainer Control Panel</h1>
+        <p style="margin:0; font-size:0.88rem; color:var(--ink-soft);">
+          Direct management of files and calendar entries. All actions commit directly to <code>main</code>.
+        </p>
+      </div>
+      <div class="admin-status-indicator">
+        <span class="admin-status-dot"></span>
+        <span>Worker Connected: <strong id="admin-worker-host">Cloudflare</strong></span>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="admin-tab-bar" role="tablist">
+      <button type="button" class="admin-tab-btn active" id="tab-btn-files" data-tab="files">
+        📁 File Manager (Upload &amp; Delete)
+      </button>
+      <button type="button" class="admin-tab-btn" id="tab-btn-calendar" data-tab="calendar">
+        📅 Academic Calendar (Edit Dates)
+      </button>
+    </div>
+
+    <!-- TAB 1: File Manager -->
+    <div id="pane-files" class="admin-tab-pane">
+      <div class="admin-card">
+        <div class="admin-card-title">
+          <span>Target Directory Selector</span>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="admin-year">Curricular Year</label>
+            <select id="admin-year">
+              <option value="1-ano">1st Year</option>
+              <option value="2-ano">2nd Year</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="admin-sem">Semester</label>
+            <select id="admin-sem"></select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="admin-uc">Course Unit</label>
+            <select id="admin-uc"></select>
+          </div>
+          <div class="form-group">
+            <label for="admin-cat">Material Category</label>
+            <select id="admin-cat">
+              <option value="teoricas">Lectures (teoricas)</option>
+              <option value="praticas">Labs (praticas)</option>
+              <option value="trabalho">Assignments (trabalho)</option>
+              <option value="exames">Exams (exames)</option>
+              <option value="books">Books &amp; References (books)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="target-folder-box" style="margin-bottom:0;">
+          <span class="folder-label">Active repository directory:</span>
+          <code id="admin-active-path">files/1-ano/1-semestre/aac/teoricas/</code>
+        </div>
+      </div>
+
+      <!-- Upload Section -->
+      <div class="admin-card">
+        <div class="admin-card-title">
+          <span>Upload Files or Folders (Direct to <code>main</code>)</span>
+        </div>
+
+        <div id="admin-dropzone" class="dropzone-area">
+          <div class="dropzone-icon">
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="17 8 12 3 7 8"/>
+              <line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+          </div>
+          <div class="dropzone-title">Drag &amp; drop files/folders here, or <span class="dropzone-browse">browse from computer</span></div>
+          <div class="dropzone-hint">Supports single/multiple files, folders, code, notebooks, and PDFs</div>
+          <input type="file" id="admin-file-picker" multiple style="display:none;">
+        </div>
+
+        <!-- Staged files -->
+        <div id="admin-staged-box" class="staged-files-container" style="display:none;">
+          <div class="staged-files-header">
+            <span id="admin-staged-count">0 files selected</span>
+            <button type="button" id="admin-clear-staged" class="staged-file-remove" style="font-size:0.75rem; text-decoration:underline;">Clear all</button>
+          </div>
+          <div id="admin-staged-list" class="staged-files-list"></div>
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:14px;">
+          <button type="button" id="btn-admin-upload" class="btn btn-primary" disabled>
+            🚀 Commit &amp; Upload to Main
+          </button>
+        </div>
+        <div id="admin-upload-status" style="display:none; font-family:var(--font-mono); font-size:0.82rem; margin-top:10px; color:var(--ink-soft);"></div>
+      </div>
+
+      <!-- Existing Files List -->
+      <div class="admin-card">
+        <div class="admin-card-title">
+          <span>Files in this Category on <code>main</code></span>
+          <span id="admin-file-count-badge" class="badge" style="font-size:0.75rem;">0 files</span>
+        </div>
+        <div id="admin-files-list" class="admin-files-table">
+          <div style="padding:14px; text-align:center; color:var(--ink-faint); font-size:0.86rem;">
+            No files found in this category.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: Calendar Manager -->
+    <div id="pane-calendar" class="admin-tab-pane" style="display:none;">
+      <!-- Add Event Card -->
+      <div class="admin-card">
+        <div class="admin-card-title">
+          <span>➕ Add New Academic Calendar Event</span>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="new-event-date">Date *</label>
+            <input type="date" id="new-event-date" required>
+          </div>
+          <div class="form-group">
+            <label for="new-event-type">Event Type</label>
+            <select id="new-event-type">
+              <option value="exams">Exam / Test</option>
+              <option value="presentation">Presentation / Defense</option>
+              <option value="deadline">Assignment Deadline</option>
+              <option value="semester">Semester Milestone</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="new-event-label">Event Description / Course *</label>
+          <input type="text" id="new-event-label" placeholder="e.g. CPAR Normal Exam or AAC Project Presentation">
+        </div>
+        <div style="display:flex; justify-content:flex-end;">
+          <button type="button" id="btn-add-event-row" class="btn btn-secondary">
+            ➕ Add to Calendar List
+          </button>
+        </div>
+      </div>
+
+      <!-- Calendar Table Card -->
+      <div class="admin-card">
+        <div class="admin-card-title">
+          <span>Active Events in <code>calendar.dates</code></span>
+          <span id="admin-event-count" class="badge" style="font-size:0.75rem;">0 events</span>
+        </div>
+        <p style="font-size:0.82rem; color:var(--ink-soft); margin:0 0 14px;">
+          You can edit dates, labels, and types directly below. When finished, click <strong>"Save &amp; Commit to Main"</strong>.
+        </p>
+
+        <div style="overflow-x:auto;">
+          <table class="admin-calendar-table">
+            <thead>
+              <tr>
+                <th style="width:160px;">Date (YYYY-MM-DD)</th>
+                <th>Event Description / Label</th>
+                <th style="width:160px;">Type Tag</th>
+                <th style="width:70px; text-align:center;">Action</th>
+              </tr>
+            </thead>
+            <tbody id="admin-calendar-tbody"></tbody>
+          </table>
+        </div>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px; flex-wrap:wrap; gap:12px;">
+          <span id="calendar-save-status" style="font-family:var(--font-mono); font-size:0.82rem; color:var(--ink-soft);"></span>
+          <button type="button" id="btn-save-calendar-main" class="btn btn-primary">
+            💾 Save All Calendar Changes to Main 🚀
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer class="site-footer">
+  <span>MCA · Universidade do Minho</span>
+  <span>Admin Control Panel · Authenticated as @diogocsilva12</span>
+</footer>
+
+<!-- Toast notification element -->
+<div id="admin-toast" class="admin-toast" style="display:none;"></div>
+
+<script src="assets/data/site-data.js"></script>
+<script>
+// ---------------------------------------------------------------------
+// Admin Dashboard Controller
+// ---------------------------------------------------------------------
+
+const UC_MAPPING = {
+  "1-ano": {
+    "1-semestre": [
+      { code: "aac", name: "AAC — Advanced Computer Architectures" },
+      { code: "cpar", name: "CPAR — Parallel Computing" },
+      { code: "fced", name: "FCED — High-Performance Computing Tools" },
+      { code: "sac", name: "SAC — Computer Systems & Architectures (Option I)" },
+      { code: "dcct", name: "DCCT — Data Classification & Clustering (Option I)" },
+      { code: "sne", name: "SNE — Numerical Simulation in Engineering" },
+      { code: "vc", name: "VC — Scientific Visualization" },
+    ],
+    "2-semestre": [
+      { code: "aded", name: "ADED — High-Performance Data Analysis" },
+      { code: "ap", name: "AP — Parallel Algorithms" },
+      { code: "chle", name: "CHLE — Large-Scale Hybrid Computing" },
+      { code: "pced", name: "PCED — Project in High Performance Computing" },
+      { code: "sade", name: "SADE — Efficient Storage Systems" },
+    ],
+  },
+  "2-ano": {
+    "1-semestre": [
+      { code: "nic", name: "NIC — Nature Inspired Computation (Option II/III)" },
+      { code: "ds", name: "DS — Data Security (Option II/III)" },
+      { code: "ccas", name: "CCAS — Cloud Computing Applications & Services (Option II/III)" },
+      { code: "hphci", name: "HPHCI — High Performance Hybrid Computing Infrastructures (Option II/III)" },
+      { code: "odac", name: "ODAC — Orchestration of Distributed Advanced Computing (Option II/III)" },
+      { code: "bsb", name: "BSB — Bioinformatics & Systems Biology (Option IV)" },
+      { code: "cr", name: "CR — Computational Rheology (Option IV)" },
+      { code: "dml", name: "DML — Data and Machine Learning (Option IV)" },
+      { code: "diss", name: "DISS — Dissertation / Project / Internship (Part I)" },
+    ],
+    "2-semestre": [
+      { code: "diss", name: "DISS — Dissertation / Project / Internship (Part II)" },
+    ],
+  },
+};
+
+const CATEGORY_MAP = {
+  teoricas: "Lectures",
+  praticas: "Labs",
+  trabalho: "Assignments",
+  exames: "Exams",
+  books: "Books & References",
+};
+
+let currentAdminKey = sessionStorage.getItem("mca_admin_key") || "";
+let calendarDates = [];
+let adminStagedFiles = [];
+
+function getApiUrl() {
+  const cfg = (window.SITE_DATA && window.SITE_DATA.config) || {};
+  return (cfg.submissionApiUrl || "").replace(/\/+$/, "");
+}
+
+function showToast(msg, duration = 3500) {
+  const toast = document.getElementById("admin-toast");
+  toast.textContent = msg;
+  toast.style.display = "flex";
+  setTimeout(() => {
+    toast.style.display = "none";
+  }, duration);
+}
+
+function formatSize(bytes) {
+  if (bytes < 1024) return bytes + " B";
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(0) + " KB";
+  return (bytes / (1024 * 1024)).toFixed(1) + " MB";
+}
+
+function readFileAsBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const res = reader.result;
+      resolve(typeof res === "string" ? res.split(",")[1] : "");
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+// ---------------------------------------------------------------------
+// Auth & Verification
+// ---------------------------------------------------------------------
+
+async function verifyKey(key) {
+  const apiUrl = getApiUrl();
+  if (!apiUrl) throw new Error("Worker URL is not configured in site-data.js.");
+
+  const res = await fetch(`${apiUrl}/admin/verify`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${key}`,
+    },
+  });
+
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok || !data.success) {
+    throw new Error(data.error || `HTTP ${res.status}: Unauthorized`);
+  }
+  return true;
+}
+
+const loginView = document.getElementById("admin-login-view");
+const appView = document.getElementById("admin-app-view");
+const navLogoutItem = document.getElementById("nav-logout-item");
+const loginForm = document.getElementById("admin-login-form");
+const keyInput = document.getElementById("admin-key-input");
+const loginErrorMsg = document.getElementById("login-error-msg");
+
+async function checkAuthOnLoad() {
+  if (currentAdminKey) {
+    try {
+      await verifyKey(currentAdminKey);
+      initDashboard();
+      return;
+    } catch (e) {
+      sessionStorage.removeItem("mca_admin_key");
+      currentAdminKey = "";
+    }
+  }
+  loginView.style.display = "flex";
+  appView.style.display = "none";
+  navLogoutItem.style.display = "none";
+}
+
+loginForm.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const key = keyInput.value.trim();
+  if (!key) return;
+
+  loginErrorMsg.style.display = "none";
+  const btn = document.getElementById("btn-login-submit");
+  btn.disabled = true;
+  btn.textContent = "Verifying...";
+
+  try {
+    await verifyKey(key);
+    currentAdminKey = key;
+    sessionStorage.setItem("mca_admin_key", key);
+    initDashboard();
+  } catch (err) {
+    loginErrorMsg.textContent = err.message || "Invalid admin password or token.";
+    loginErrorMsg.style.display = "block";
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Unlock Admin Dashboard →";
+  }
+});
+
+document.getElementById("btn-logout").addEventListener("click", () => {
+  sessionStorage.removeItem("mca_admin_key");
+  currentAdminKey = "";
+  location.reload();
+});
+
+// ---------------------------------------------------------------------
+// Dashboard Initialization
+// ---------------------------------------------------------------------
+
+function initDashboard() {
+  loginView.style.display = "none";
+  appView.style.display = "block";
+  navLogoutItem.style.display = "block";
+
+  const apiUrl = getApiUrl();
+  try {
+    const u = new URL(apiUrl);
+    document.getElementById("admin-worker-host").textContent = u.hostname;
+  } catch (e) {
+    document.getElementById("admin-worker-host").textContent = apiUrl || "Local";
+  }
+
+  initTabSwitching();
+  initFileControls();
+  initCalendarControls();
+}
+
+// ---------------------------------------------------------------------
+// Tabs
+// ---------------------------------------------------------------------
+
+function initTabSwitching() {
+  const tabBtnFiles = document.getElementById("tab-btn-files");
+  const tabBtnCalendar = document.getElementById("tab-btn-calendar");
+  const paneFiles = document.getElementById("pane-files");
+  const paneCalendar = document.getElementById("pane-calendar");
+
+  tabBtnFiles.addEventListener("click", () => {
+    tabBtnFiles.classList.add("active");
+    tabBtnCalendar.classList.remove("active");
+    paneFiles.style.display = "block";
+    paneCalendar.style.display = "none";
+  });
+
+  tabBtnCalendar.addEventListener("click", () => {
+    tabBtnCalendar.classList.add("active");
+    tabBtnFiles.classList.remove("active");
+    paneFiles.style.display = "none";
+    paneCalendar.style.display = "block";
+  });
+}
+
+// ---------------------------------------------------------------------
+// File Manager Controls
+// ---------------------------------------------------------------------
+
+const yearSelect = document.getElementById("admin-year");
+const semSelect = document.getElementById("admin-sem");
+const ucSelect = document.getElementById("admin-uc");
+const catSelect = document.getElementById("admin-cat");
+const pathEl = document.getElementById("admin-active-path");
+const filesListEl = document.getElementById("admin-files-list");
+const fileCountBadge = document.getElementById("admin-file-count-badge");
+
+function initFileControls() {
+  yearSelect.addEventListener("change", updateSemOptions);
+  semSelect.addEventListener("change", updateUcOptions);
+  ucSelect.addEventListener("change", refreshActiveCategory);
+  catSelect.addEventListener("change", refreshActiveCategory);
+
+  updateSemOptions();
+  initDropzone();
+}
+
+function updateSemOptions() {
+  const y = yearSelect.value;
+  if (y === "2-ano") {
+    semSelect.innerHTML = `
+      <option value="1-semestre">1st Sem (Options &amp; Specialization)</option>
+      <option value="2-semestre">2nd Sem (Dissertation Defense)</option>
+    `;
+  } else {
+    semSelect.innerHTML = `
+      <option value="1-semestre">1st Semester</option>
+      <option value="2-semestre">2nd Semester</option>
+    `;
+  }
+  updateUcOptions();
+}
+
+function updateUcOptions() {
+  const y = yearSelect.value;
+  const s = semSelect.value;
+  const list = (UC_MAPPING[y] && UC_MAPPING[y][s]) || [];
+  ucSelect.innerHTML = list.map((u) => `<option value="${u.code}">${u.name}</option>`).join("");
+  refreshActiveCategory();
+}
+
+function refreshActiveCategory() {
+  const y = yearSelect.value;
+  const s = semSelect.value;
+  const uc = ucSelect.value || "aac";
+  const cat = catSelect.value || "teoricas";
+  const activePath = `files/${y}/${s}/${uc}/${cat}/`;
+  pathEl.textContent = activePath;
+
+  renderExistingFiles(y, s, uc, cat);
+}
+
+function renderExistingFiles(year, sem, ucCode, catKey) {
+  filesListEl.innerHTML = "";
+  const yearNum = year === "2-ano" ? 2 : 1;
+  const yearsData = (window.SITE_DATA && window.SITE_DATA.files && window.SITE_DATA.files.years) || {};
+  const sems = yearsData[yearNum] || [];
+
+  // Find semester
+  const semIndex = sem === "2-semestre" ? 1 : 0;
+  const semObj = sems[semIndex];
+  if (!semObj) {
+    filesListEl.innerHTML = `<div style="padding:14px; text-align:center; color:var(--ink-faint); font-size:0.86rem;">No data for semester.</div>`;
+    fileCountBadge.textContent = "0 files";
+    return;
+  }
+
+  const subject = semObj.subjects.find((s) => s.code.toLowerCase() === ucCode.toLowerCase());
+  if (!subject || !subject.files || !subject.files.length) {
+    filesListEl.innerHTML = `<div style="padding:14px; text-align:center; color:var(--ink-faint); font-size:0.86rem;">No files found in this category.</div>`;
+    fileCountBadge.textContent = "0 files";
+    return;
+  }
+
+  const expectedCatName = CATEGORY_MAP[catKey] || "Lectures";
+  const matchingFiles = subject.files.filter((f) => {
+    return f.category && f.category.toLowerCase().includes(expectedCatName.toLowerCase());
+  });
+
+  fileCountBadge.textContent = `${matchingFiles.length} file${matchingFiles.length === 1 ? "" : "s"}`;
+
+  if (!matchingFiles.length) {
+    filesListEl.innerHTML = `<div style="padding:14px; text-align:center; color:var(--ink-faint); font-size:0.86rem;">No files currently in this category. Drop files above to add.</div>`;
+    return;
+  }
+
+  matchingFiles.forEach((file) => {
+    const row = document.createElement("div");
+    row.className = "admin-file-row";
+    row.innerHTML = `
+      <div class="admin-file-info">
+        <span style="font-size:1.1rem;">📄</span>
+        <span class="admin-file-name" title="${file.name}">${file.name}</span>
+        <span class="admin-file-badge">${file.size || ""}</span>
+        <span class="admin-file-badge">${file.type || ""}</span>
+      </div>
+      <div style="display:flex; gap:8px; align-items:center;">
+        <a href="${file.url}" target="_blank" rel="noopener" class="btn btn-secondary btn-sm" style="padding:3px 8px; font-size:0.75rem;">View</a>
+        <button type="button" class="admin-btn-delete" data-path="${file.url}">🗑️ Delete</button>
+      </div>
+    `;
+
+    row.querySelector(".admin-btn-delete").addEventListener("click", () => {
+      deleteFileFromMain(file.url, file.name);
+    });
+
+    filesListEl.appendChild(row);
+  });
+}
+
+async function deleteFileFromMain(filePath, fileName) {
+  if (!confirm(`Are you sure you want to permanently delete "${fileName}" from the main branch?\n\nPath: ${filePath}`)) {
+    return;
+  }
+
+  const apiUrl = getApiUrl();
+  showToast(`Deleting ${fileName} from main...`, 10000);
+
+  try {
+    const res = await fetch(`${apiUrl}/admin/delete-file`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${currentAdminKey}`,
+      },
+      body: JSON.stringify({ path: filePath }),
+    });
+
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data.success) {
+      throw new Error(data.error || `HTTP ${res.status}`);
+    }
+
+    showToast(`✅ Successfully deleted ${fileName} from main!`);
+    
+    // Remove from local SITE_DATA memory and re-render
+    removeFileFromLocalData(filePath);
+    refreshActiveCategory();
+  } catch (err) {
+    alert(`Error deleting file: ${err.message}`);
+    showToast("❌ Deletion failed.", 3000);
+  }
+}
+
+function removeFileFromLocalData(filePath) {
+  try {
+    for (const y in window.SITE_DATA.files.years) {
+      for (const sem of window.SITE_DATA.files.years[y]) {
+        for (const subj of sem.subjects) {
+          subj.files = subj.files.filter((f) => f.url !== filePath);
+        }
+      }
+    }
+  } catch (e) {}
+}
+
+// ---------------------------------------------------------------------
+// Dropzone & Direct Upload to Main
+// ---------------------------------------------------------------------
+
+function initDropzone() {
+  const dropzone = document.getElementById("admin-dropzone");
+  const filePicker = document.getElementById("admin-file-picker");
+  const stagedBox = document.getElementById("admin-staged-box");
+  const stagedCount = document.getElementById("admin-staged-count");
+  const stagedList = document.getElementById("admin-staged-list");
+  const btnClear = document.getElementById("admin-clear-staged");
+  const btnUpload = document.getElementById("btn-admin-upload");
+  const uploadStatus = document.getElementById("admin-upload-status");
+
+  function updateStagedUI() {
+    if (!adminStagedFiles.length) {
+      stagedBox.style.display = "none";
+      btnUpload.disabled = true;
+      return;
+    }
+    stagedBox.style.display = "block";
+    btnUpload.disabled = false;
+    stagedCount.textContent = `${adminStagedFiles.length} file${adminStagedFiles.length > 1 ? "s" : ""} selected`;
+    stagedList.innerHTML = "";
+
+    adminStagedFiles.forEach((f, idx) => {
+      const item = document.createElement("div");
+      item.className = "staged-file-item";
+      item.innerHTML = `
+        <span class="staged-file-name">${f.name}</span>
+        <span class="staged-file-size">${formatSize(f.size)}</span>
+        <button type="button" class="staged-file-remove" data-idx="${idx}">✕</button>
+      `;
+      item.querySelector(".staged-file-remove").addEventListener("click", () => {
+        adminStagedFiles.splice(idx, 1);
+        updateStagedUI();
+      });
+      stagedList.appendChild(item);
+    });
+  }
+
+  function addFiles(files) {
+    for (let i = 0; i < files.length; i++) {
+      const f = files[i];
+      if (!adminStagedFiles.some((ex) => ex.name === f.name && ex.size === f.size)) {
+        adminStagedFiles.push(f);
+      }
+    }
+    updateStagedUI();
+  }
+
+  dropzone.addEventListener("click", () => filePicker.click());
+  filePicker.addEventListener("change", (e) => {
+    if (e.target.files) addFiles(e.target.files);
+    filePicker.value = "";
+  });
+
+  dropzone.addEventListener("dragover", (e) => {
+    e.preventDefault();
+    dropzone.classList.add("drag-active");
+  });
+  dropzone.addEventListener("dragleave", () => {
+    dropzone.classList.remove("drag-active");
+  });
+  dropzone.addEventListener("drop", (e) => {
+    e.preventDefault();
+    dropzone.classList.remove("drag-active");
+    if (e.dataTransfer && e.dataTransfer.files) {
+      addFiles(e.dataTransfer.files);
+    }
+  });
+
+  btnClear.addEventListener("click", () => {
+    adminStagedFiles = [];
+    updateStagedUI();
+  });
+
+  btnUpload.addEventListener("click", async () => {
+    if (!adminStagedFiles.length) return;
+
+    btnUpload.disabled = true;
+    uploadStatus.style.display = "block";
+    uploadStatus.textContent = "Reading files and encoding...";
+
+    try {
+      const filePayloads = [];
+      for (let i = 0; i < adminStagedFiles.length; i++) {
+        const file = adminStagedFiles[i];
+        uploadStatus.textContent = `Encoding (${i + 1}/${adminStagedFiles.length}): ${file.name}...`;
+        const base64 = await readFileAsBase64(file);
+        filePayloads.push({ name: file.name, content: base64 });
+      }
+
+      uploadStatus.textContent = "Committing directly to main branch...";
+
+      const apiUrl = getApiUrl();
+      const res = await fetch(`${apiUrl}/admin/upload-files`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${currentAdminKey}`,
+        },
+        body: JSON.stringify({
+          year: yearSelect.value,
+          semester: semSelect.value,
+          course: ucSelect.value,
+          category: catSelect.value,
+          files: filePayloads,
+        }),
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || `HTTP ${res.status}`);
+      }
+
+      showToast(`🎉 Successfully uploaded ${data.files.length} file(s) to main!`);
+      uploadStatus.textContent = `✅ Committed to main (${data.commit_sha.substring(0, 7)}). Auto-sync action will update metadata.`;
+
+      // Clear staged files
+      adminStagedFiles = [];
+      updateStagedUI();
+    } catch (err) {
+      alert(`Upload error: ${err.message}`);
+      uploadStatus.textContent = `❌ Upload failed: ${err.message}`;
+    } finally {
+      btnUpload.disabled = false;
+    }
+  });
+}
+
+// ---------------------------------------------------------------------
+// Calendar Manager
+// ---------------------------------------------------------------------
+
+function initCalendarControls() {
+  calendarDates = (window.SITE_DATA && window.SITE_DATA.calendar && window.SITE_DATA.calendar.dates) || [];
+  renderCalendarTable();
+
+  document.getElementById("btn-add-event-row").addEventListener("click", () => {
+    const dInput = document.getElementById("new-event-date");
+    const lInput = document.getElementById("new-event-label");
+    const tInput = document.getElementById("new-event-type");
+
+    const dateVal = dInput.value.trim();
+    const labelVal = lInput.value.trim();
+    const typeVal = tInput.value;
+
+    if (!dateVal || !labelVal) {
+      alert("Please fill in both the Date and Event Description.");
+      return;
+    }
+
+    calendarDates.push({
+      date: dateVal,
+      label: labelVal,
+      tag: typeVal,
+    });
+    calendarDates.sort((a, b) => (a.date < b.date ? -1 : 1));
+
+    dInput.value = "";
+    lInput.value = "";
+
+    renderCalendarTable();
+    showToast("Event added to list. Click 'Save' to commit to main.");
+  });
+
+  document.getElementById("btn-save-calendar-main").addEventListener("click", saveCalendarToMain);
+}
+
+function renderCalendarTable() {
+  const tbody = document.getElementById("admin-calendar-tbody");
+  const countBadge = document.getElementById("admin-event-count");
+  tbody.innerHTML = "";
+  countBadge.textContent = `${calendarDates.length} events`;
+
+  calendarDates.forEach((evt, idx) => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>
+        <input type="date" class="admin-calendar-input row-date" value="${evt.date}">
+      </td>
+      <td>
+        <input type="text" class="admin-calendar-input row-label" value="${evt.label}">
+      </td>
+      <td>
+        <select class="admin-calendar-input row-tag">
+          <option value="exams" ${evt.tag === "exams" ? "selected" : ""}>Exams / Tests</option>
+          <option value="presentation" ${evt.tag === "presentation" ? "selected" : ""}>Presentation</option>
+          <option value="deadline" ${evt.tag === "deadline" ? "selected" : ""}>Deadline</option>
+          <option value="semester" ${evt.tag === "semester" ? "selected" : ""}>Semester</option>
+        </select>
+      </td>
+      <td style="text-align:center;">
+        <button type="button" class="staged-file-remove row-delete" style="font-size:1rem;" title="Delete event">🗑️</button>
+      </td>
+    `;
+
+    tr.querySelector(".row-date").addEventListener("change", (e) => {
+      evt.date = e.target.value;
+    });
+    tr.querySelector(".row-label").addEventListener("input", (e) => {
+      evt.label = e.target.value;
+    });
+    tr.querySelector(".row-tag").addEventListener("change", (e) => {
+      evt.tag = e.target.value;
+    });
+    tr.querySelector(".row-delete").addEventListener("click", () => {
+      calendarDates.splice(idx, 1);
+      renderCalendarTable();
+    });
+
+    tbody.appendChild(tr);
+  });
+}
+
+async function saveCalendarToMain() {
+  const btn = document.getElementById("btn-save-calendar-main");
+  const statusEl = document.getElementById("calendar-save-status");
+
+  btn.disabled = true;
+  statusEl.textContent = "Committing updated calendar to main...";
+
+  try {
+    const apiUrl = getApiUrl();
+    const res = await fetch(`${apiUrl}/admin/save-calendar`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${currentAdminKey}`,
+      },
+      body: JSON.stringify({ dates: calendarDates }),
+    });
+
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data.success) {
+      throw new Error(data.error || `HTTP ${res.status}`);
+    }
+
+    showToast(`✅ Successfully saved ${data.count} calendar dates directly to main!`);
+    statusEl.textContent = `✅ Saved to main!`;
+  } catch (err) {
+    alert(`Error saving calendar: ${err.message}`);
+    statusEl.textContent = `❌ Save failed: ${err.message}`;
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+// ---------------------------------------------------------------------
+// Boot
+// ---------------------------------------------------------------------
+document.addEventListener("DOMContentLoaded", checkAuthOnLoad);
+</script>
+</body>
+</html>
