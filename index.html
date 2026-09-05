@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Files · MCA</title>
 <meta name="description" content="Shared study materials for the MCA programme at Universidade do Minho.">
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
 <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
@@ -20,6 +21,7 @@
         <li><a href="index.html">Files</a></li>
         <li><a href="calendar.html">Calendar</a></li>
         <li><a href="schedule.html">Schedule</a></li>
+        <li><button type="button" class="btn btn-secondary btn-sm nav-contribute-btn" data-open-contribute="file">+ Propor Conteúdo</button></li>
       </ul>
     </nav>
   </div>
@@ -32,11 +34,27 @@
         <h1>Study materials</h1>
         <p>Notes, slides and exercises passed down by MCA students, for the ones coming after them.</p>
       </div>
-      <div class="year-switch" data-year-switch role="group" aria-label="Select year">
-        <button type="button" data-year="1" aria-pressed="true">1st year</button>
-        <button type="button" data-year="2" aria-pressed="false">2nd year</button>
+    </div>
+
+    <div class="files-controls">
+      <div class="search-box">
+        <svg class="search-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input type="search" id="file-search-input" placeholder="Search slides, exercises, subjects..." aria-label="Search study materials">
+        <button type="button" id="clear-search-btn" class="clear-search-btn" aria-label="Clear search" style="display:none;">✕</button>
+      </div>
+      <div class="controls-actions">
+        <button type="button" class="btn btn-secondary btn-sm" id="toggle-all-btn">Expand all</button>
+        <button type="button" class="btn btn-secondary btn-sm" data-open-contribute="file">+ Adicionar ficheiro</button>
+        <div class="year-switch" data-year-switch role="group" aria-label="Select year">
+          <button type="button" data-year="1" aria-pressed="true">1st year</button>
+          <button type="button" data-year="2" aria-pressed="false">2nd year</button>
+        </div>
       </div>
     </div>
+    <div id="search-status" class="search-status" style="display:none;"></div>
   </div>
 
   <div id="files-root"></div>

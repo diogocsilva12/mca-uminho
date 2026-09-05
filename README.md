@@ -1,84 +1,52 @@
 # MCA site
 
-A small 3-page site for sharing MCA (Universidade do Minho) study materials,
-academic calendar and class schedule with new students. Plain HTML/CSS/JS —
-no build step, no dependencies to install.
+Site estático para partilha de materiais de estudo, calendário académico e horário de aulas do **Mestrado em Computação Avançada (MCA)** da **Universidade do Minho**. Plain HTML/CSS/JS — sem dependências nem etapas de compilação.
 
 ```
-index.html              Files page (home)
-calendar.html            Academic calendar page
-schedule.html            Class schedule page (embeds mca.jalves.dev/calendar)
-assets/style.css         All styling
-assets/main.js           All interactivity
-assets/data/site-data.js Everything you'll actually want to edit
-files/                   Put the real shared files here
+index.html              Página de materiais de estudo (pesquisa + navegação por ano e semestre)
+calendar.html            Calendário académico e instruções de subscrição de calendário
+schedule.html            Página de horário de aulas (ferramenta externa por João Alves)
+assets/favicon.svg      Ícone do site (SVG)
+assets/style.css         Estilos CSS partilhados (suporte a modo claro/escuro)
+assets/main.js           Interatividade, pesquisa em tempo real e renderização
+assets/data/site-data.js Base de dados dos ficheiros e datas do calendário
+files/                   Estrutura organizada de materiais de estudo
 ```
 
-## Editing content
+## Estrutura de Ficheiros (`files/`)
 
-Almost everything you'll want to change lives in **`assets/data/site-data.js`**.
-It's a plain JavaScript object with comments explaining each part:
+Todos os materiais partilhados encontram-se organizados por ano curricular e semestre:
 
-- **`files.years[1]` / `files.years[2]`** — the file listing, grouped by
-  semester → subject → file. Right now year 1 is filled with **sample
-  placeholder entries** (real subject names, fake files) so you can see the
-  layout. Replace them with your real materials:
-  1. Copy the real files into `files/`, e.g. `files/1-ano/subject-name/slides.pdf`.
-  2. Point each entry's `url` at that path.
-  3. Delete the sample-data note at the top of the file once it's real.
+```
+files/
+└── 1-ano/
+    ├── 1-semestre/
+    │   ├── aac/   — Arquiteturas Avançadas de Computadores
+    │   ├── cpar/  — Computação Paralela
+    │   ├── fced/  — Ferramentas de Computação de Elevado Desempenho
+    │   ├── sac/   — Sistemas e Arquiteturas de Computadores
+    │   ├── sne/   — Simulação Numérica em Engenharia
+    │   └── vc/    — Visualização Científica
+    └── 2-semestre/
+        ├── aded/  — Análise de Dados de Elevado Desempenho
+        ├── ap/    — Algoritmos Paralelos
+        ├── chle/  — Computação Híbrida de Larga Escala
+        ├── pced/  — Projeto em Computação de Elevado Desempenho
+        └── sade/  — Sistemas de Armazenamento de Dados Eficientes
+```
 
-  Year 2 is intentionally empty — it shows a "nothing shared yet" message
-  until someone adds materials.
+Dentro de cada unidade curricular os ficheiros estão categorizados por `teoricas/`, `praticas/`, `trabalho/`, `exames/` e `books/`.
 
-- **`calendar.dates`** — the key-dates list on the Calendar page. The dates
-  currently there are **illustrative placeholders**, not confirmed official
-  dates — swap them for the real ones from the school's official calendar
-  before sharing this with anyone.
+## Ferramenta de Horários e Créditos
 
-- **`calendar.embedUrl`** — if you have (or set up) a public calendar you
-  want embedded next to the dates list (e.g. a Google Calendar "Secret
-  address in iCal format" / embed URL), paste it here. Leave it blank and
-  the page shows a clean placeholder instead of a broken embed.
+Um agradecimento especial e reconhecimento ao **João Alves** pelo desenvolvimento da ferramenta de horários e subscrição de calendário do MCA:
+- Ferramenta: [mca.jalves.dev/calendar](https://mca.jalves.dev/calendar)
+- GitHub: [github.com/joaoalves03](https://github.com/joaoalves03)
 
-- **`schedule.toolUrl`** — the class-schedule tool. Already set to
-  `https://mca.jalves.dev/calendar`.
+## Publicação no GitHub Pages
 
-No other file needs to change for normal content updates.
+1. No repositório, acede a **Settings → Pages**.
+2. Sob "Build and deployment", seleciona **Source** como "Deploy from a branch".
+3. Escolhe a branch `main` e a pasta `/ (root)`, e clica em **Save**.
+4. O GitHub Pages disponibiliza o site no URL `https://<username>.github.io/<repo>/`.
 
-## Adding real files
-
-Put files anywhere under `files/` (subfolders are fine — they're only for
-your own organisation, the site doesn't care about the folder structure,
-only about the `url` you put in `site-data.js`). GitHub Pages will serve
-them as static downloads automatically.
-
-If any files are large (tens of MB+), consider whether GitHub is the right
-place for them — a normal GitHub repository has soft size limits, and huge
-binary files make cloning slow for everyone. For a handful of PDFs and
-slide decks this is a non-issue.
-
-## Deploying to GitHub Pages
-
-1. Create a new GitHub repository (public, since GitHub Pages on the free
-   tier serves public repos) and push this folder's contents to it.
-2. In the repo, go to **Settings → Pages**.
-3. Under "Build and deployment", set **Source** to "Deploy from a branch",
-   pick the `main` branch and the `/ (root)` folder, then save.
-4. GitHub gives you a URL like `https://<username>.github.io/<repo>/` a
-   minute or two later.
-
-If you'd rather use a custom domain, add a `CNAME` file with the domain
-name at the repo root and configure the DNS record GitHub asks for.
-
-## Notes / things left for you to finish
-
-- Real files still need to replace the sample entries described above.
-- Real academic dates still need to replace the placeholder ones.
-- No calendar embed source is configured yet (`embedUrl` is blank).
-- The embedded schedule tool (an `<iframe>` on the Schedule page) may or
-  may not render depending on that site's framing policy — the page always
-  shows an "Open the schedule tool" button above it either way, so it works
-  regardless.
-- Everything is in English. If you'd rather it be in Portuguese (or both),
-  the copy is plain text spread across the three `.html` files — happy to
-  produce a translated version if useful.

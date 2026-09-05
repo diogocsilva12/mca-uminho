@@ -1,0 +1,15 @@
+Tutorial Paraview 03 - Fluid dynamics and VTK integration
+
+1) clone the git repository below to your local computer
+
+>>>>. git clone https://github.com/luisps/MCA_fluid.git
+
+2) Read the files README.md and QUICKSTART.md for building instructions and an overview of the software capabilities
+
+3) The main goal of this tutorial is for you to understand how to save simulation data into files, that can be read by Paraview in a post-processing visualization.
+
+Read VTK_INTEGRATION.md and scroll through VTKWriter.cpp to get a feeling of VTK's data structures and file i/o API.
+
+4) Build and execute the code
+
+5) Go through the steps in PARAVIEW_TUTORIAL.md

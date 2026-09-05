@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Schedule · MCA</title>
 <meta name="description" content="Class schedule and calendar subscription tool for the MCA programme at Universidade do Minho.">
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
 <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
@@ -20,6 +21,7 @@
         <li><a href="index.html">Files</a></li>
         <li><a href="calendar.html">Calendar</a></li>
         <li><a href="schedule.html">Schedule</a></li>
+        <li><button type="button" class="btn btn-secondary btn-sm nav-contribute-btn" data-open-contribute="date">+ Propor Conteúdo</button></li>
       </ul>
     </nav>
   </div>
@@ -27,13 +29,25 @@
 
 <main>
   <div class="page-head">
+    <div class="author-attribution">
+      <span>Built &amp; maintained by</span>
+      <a class="github-link-inline" href="https://github.com/joaoalves03" target="_blank" rel="noopener">
+        <svg class="github-icon" viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true">
+          <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
+        </svg>
+        <span>João Alves (@joaoalves03) ↗</span>
+      </a>
+    </div>
     <h1>Class schedule</h1>
-    <p>Pick your year and electives to build a live timetable, then subscribe so it stays in sync in your own calendar app.</p>
+    <p>Pick your year and electives to build a live timetable, then subscribe so it stays in sync in your calendar app.</p>
   </div>
 
   <div class="schedule-cta">
     <a class="btn btn-primary" data-schedule-url href="https://mca.jalves.dev/calendar" target="_blank" rel="noopener">
       Open the schedule tool ↗
+    </a>
+    <a class="btn btn-secondary" href="https://github.com/joaoalves03" target="_blank" rel="noopener">
+      João Alves' GitHub ↗
     </a>
     <span class="frame-note">Opens <span class="mono" data-schedule-url-label></span> in a new tab.</span>
   </div>
@@ -45,7 +59,7 @@
     </div>
     <iframe data-schedule-url loading="lazy" title="MCA class schedule tool"></iframe>
   </div>
-  <p class="frame-note">If the tool doesn't load above, use the button at the top to open it directly — some browsers block embedded pages.</p>
+  <p class="frame-note">If the tool doesn't load above, use the button at the top to open it directly — some browsers block embedded frames.</p>
 
   <hr class="section-divider">
 
@@ -59,7 +73,7 @@
 
 <footer class="site-footer">
   <span>MCA · Universidade do Minho</span>
-  <span>Schedule tool built and maintained independently — <a href="https://mca.jalves.dev/calendar" target="_blank" rel="noopener">mca.jalves.dev</a>.</span>
+  <span>Schedule tool independently built and maintained by <a href="https://github.com/joaoalves03" target="_blank" rel="noopener">João Alves (@joaoalves03)</a> — <a href="https://mca.jalves.dev/calendar" target="_blank" rel="noopener">mca.jalves.dev</a>.</span>
 </footer>
 
 <script src="assets/data/site-data.js"></script>

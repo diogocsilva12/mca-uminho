@@ -1,0 +1,61 @@
+name: Submeter Material de Estudo
+description: Propor a adição de novos slides, exercícios ou notas de estudo
+title: "[Material] "
+labels: ["materiais", "aguarda-revisao"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Obrigado por contribuíres com materiais para o MCA!
+        Para manter o repositório limpo, todas as propostas são revistas e aprovadas por @diogocsilva12.
+  - type: dropdown
+    id: ano
+    attributes:
+      label: Ano Curricular
+      options:
+        - 1º Ano
+        - 2º Ano
+    validations:
+      required: true
+  - type: dropdown
+    id: semestre
+    attributes:
+      label: Semestre
+      options:
+        - 1º Semestre
+        - 2º Semestre
+    validations:
+      required: true
+  - type: input
+    id: uc
+    attributes:
+      label: Unidade Curricular
+      placeholder: ex: AAC, CPAR, FCED, SAC, SNE, VC, ADED, AP, CHLE, PCED, SADE
+    validations:
+      required: true
+  - type: dropdown
+    id: categoria
+    attributes:
+      label: Categoria do Material
+      options:
+        - Teóricas (slides de aulas)
+        - Práticas (guiões e código de labs)
+        - Trabalhos (enunciados de projetos)
+        - Exames (testes e enunciados passados)
+        - Livros e Referências
+    validations:
+      required: true
+  - type: textarea
+    id: descricao
+    attributes:
+      label: Descrição do Material / Link de Download
+      placeholder: Descreve o que estás a submeter e anexa o ficheiro ou link (Drop files here).
+    validations:
+      required: true
+  - type: checkboxes
+    id: privacidade
+    attributes:
+      label: Confirmação de Privacidade (RGPD)
+      options:
+        - label: Confirmo que este material NÃO contém pautas ou notas individuais com nomes/números de alunos.
+          required: true

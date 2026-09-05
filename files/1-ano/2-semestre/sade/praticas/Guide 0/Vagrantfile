@@ -1,0 +1,58 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+# All Vagrant configuration is done below. The "2" in Vagrant.configure
+# configures the configuration version (we support older styles for
+# backwards compatibility). Please don't change it unless you know what
+# you're doing.
+
+#Notes
+#user name for VMs is created as vagrant
+
+#<vagrant box add bento/ubuntu-24.04> to add OS image to internal repository
+#<vagrant up> to start VMs (run at the same folder where this file is, or pass file as argument)
+#<vagrant halt> to stop VMs
+#<vagrant destroy> to remove VMs
+
+#Variables
+PUBLIC_KEY_PATH = "~/.ssh/id_rsa.pub" #Change me if needed!
+PRIVATE_KEY_PATH = "~/.ssh/id_rsa"  #Change me if needed!
+READ_PUBLIC_KEY = File.read(File.expand_path(PUBLIC_KEY_PATH)).strip
+
+# Nodes VMs
+Number_Nodes = 1 #number Node VMs to launch
+NODES_IP_RANGE= "192.168.60" #Change me if needed!
+
+
+Vagrant.configure("2") do |config|
+
+  # Global configurations
+  config.vm.box = "bento/ubuntu-24.04"
+  config.vm.box_version = "202508.03.0"
+  config.vm.provider "virtualbox" do |vb|
+    vb.memory = 2048
+    vb.cpus = 2
+  end
+  config.vm.provision :shell, privileged: true, inline: $provision_all
+
+  # Nodes VMs configuration
+  (1..Number_Nodes).each do |i|
+    config.vm.define "node#{i}" do |node|
+      node.vm.hostname = "node#{i}"
+      node.vm.network :private_network, ip: "#{NODES_IP_RANGE}.#{100+i}"
+    end
+  end
+end
+
+  
+# Provisioning scripts
+$provision_all = <<-SHELL
+  echo "[ALL|Task 1] Configure SSH Public Key authentication"
+  echo "#{READ_PUBLIC_KEY}" >> /home/vagrant/.ssh/authorized_keys
+  sed -i 's/#PubkeyAuthentication yes/PubkeyAuthentication yes/g' /etc/ssh/sshd_config
+  sed -i 's/#PasswordAuthentication yes/PasswordAuthentication no/g' /etc/ssh/sshd_config
+  systemctl restart ssh.service
+  apt update -y
+  apt install build-essential -y
+  apt install libglib2.0-dev -y
+SHELL

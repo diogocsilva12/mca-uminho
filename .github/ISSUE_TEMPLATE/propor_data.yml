@@ -1,0 +1,39 @@
+name: Propor Data de Calendário / Horário
+description: Sugerir a adição de uma data de exame, teste, apresentação ou prazo de entrega
+title: "[Data] "
+labels: ["calendario", "aguarda-revisao"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Utiliza este formulário para sugerir novas datas de exames, testes ou apresentações.
+        A proposta será analisada e integrada por @diogocsilva12.
+  - type: input
+    id: data
+    attributes:
+      label: Data do Evento (AAAA-MM-DD)
+      placeholder: ex: 2027-01-15
+    validations:
+      required: true
+  - type: input
+    id: titulo
+    attributes:
+      label: Descrição do Evento
+      placeholder: ex: Apresentação Final do Trabalho Prático (AAC)
+    validations:
+      required: true
+  - type: dropdown
+    id: tipo
+    attributes:
+      label: Tipo de Evento
+      options:
+        - Exame (Época Normal ou Recurso)
+        - Apresentação / Defesa
+        - Entrega de Trabalho / Projeto
+        - Aula / Seminário Extraordinário
+    validations:
+      required: true
+  - type: textarea
+    id: observacoes
+    attributes:
+      label: Observações adicionais / Fonte oficial (ex: link para anúncio ou mensagem do docente)

@@ -1,0 +1,54 @@
+name: Validate Pull Request
+
+on:
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Validate site-data.js syntax and file references
+        run: |
+          node -e "
+          const fs = require('fs');
+          const code = fs.readFileSync('assets/data/site-data.js', 'utf8') + '; globalThis.SITE_DATA = SITE_DATA;';
+          eval(code);
+          let missing = 0;
+          for (const year in SITE_DATA.files.years) {
+            for (const sem of SITE_DATA.files.years[year]) {
+              for (const subj of sem.subjects) {
+                for (const file of subj.files) {
+                  if (!fs.existsSync(file.url)) {
+                    console.error('❌ Referenced file missing from repository:', file.url);
+                    missing++;
+                  }
+                }
+              }
+            }
+          }
+          if (missing > 0) {
+            console.error('Validation failed: ' + missing + ' file(s) missing.');
+            process.exit(1);
+          }
+          console.log('✅ All site-data.js file references exist on disk!');
+          "
+
+      - name: Check for unauthorized student grades or personal data (RGPD)
+        run: |
+          bad_files=$(find files -type f -iname "*pauta*" -o -iname "*grade*" -o -iname "*classificac*" | grep -v "README") || true
+          if [ -n "$bad_files" ]; then
+            echo "❌ Suspicious student grade or personal data files detected:"
+            echo "$bad_files"
+            echo "Please remove student grade files before merging."
+            exit 1
+          fi
+          echo "✅ No student grade files detected."
