@@ -755,6 +755,25 @@ const EVENT_TYPE_NAMES = {
   semester: "Semester Milestone / Class Schedule",
 };
 
+function formatUploadFileSize(bytes) {
+  if (bytes < 1024) return bytes + " B";
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(0) + " KB";
+  return (bytes / (1024 * 1024)).toFixed(1) + " MB";
+}
+
+function readFileAsBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const res = reader.result;
+      const base64 = typeof res === "string" ? res.split(",")[1] : "";
+      resolve(base64);
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
 function initContributeModal() {
   if (document.getElementById("contribute-modal")) return;
 
@@ -778,121 +797,140 @@ function initContributeModal() {
       <div class="modal-content">
         <div class="modal-notice">
           <strong>Review &amp; Safety Policy:</strong>
-          All contributions go through an automated <strong>Pull Request</strong> reviewed and approved by <strong>@${escapeHtml(repoOwner)}</strong> before merging to <code>main</code>. No student grades or personal data may be uploaded (GDPR).
+          Submissions automatically create a <strong>Pull Request</strong> on a separate branch for <strong>@${escapeHtml(repoOwner)}</strong> to review and approve before merging into <code>main</code>. No student grades or personal data may be uploaded (GDPR).
         </div>
 
         <div class="modal-tabs" id="contrib-tabs" role="tablist">
-          <button type="button" class="modal-tab-btn active" id="tab-btn-file" data-tab="file">Add Materials (Creates PR)</button>
-          <button type="button" class="modal-tab-btn" id="tab-btn-date" data-tab="date">Propose Date (Creates PR)</button>
+          <button type="button" class="modal-tab-btn active" id="tab-btn-file" data-tab="file">Upload Materials (Auto PR)</button>
+          <button type="button" class="modal-tab-btn" id="tab-btn-date" data-tab="date">Propose Date (Auto PR)</button>
         </div>
 
-        <!-- Tab 1: File submission -->
-        <div id="tab-content-file" class="tab-pane">
-          <div class="form-row">
-            <div class="form-group">
-              <label for="contrib-year">Curricular Year</label>
-              <select id="contrib-year">
-                <option value="1-ano">1st Year</option>
-                <option value="2-ano">2nd Year</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label for="contrib-sem">Semester</label>
-              <select id="contrib-sem"></select>
-            </div>
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label for="contrib-uc">Course Unit</label>
-              <select id="contrib-uc"></select>
-            </div>
-            <div class="form-group">
-              <label for="contrib-cat">Material Category</label>
-              <select id="contrib-cat">
-                <option value="teoricas">Lectures (slides, notes)</option>
-                <option value="praticas">Labs (exercises, code)</option>
-                <option value="trabalho">Assignments (project briefs)</option>
-                <option value="exames">Exams (past tests)</option>
-                <option value="books">Books &amp; References</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label for="contrib-file-title">Title / Topic Description <span style="font-size:0.76rem; color:var(--ink-faint); font-weight:normal;">(optional)</span></label>
-            <input type="text" id="contrib-file-title" placeholder="e.g. Chapter 3 - Clustering Algorithms Notes">
-          </div>
-
-          <div class="target-folder-box">
-            <span class="folder-label">Target directory in repository:</span>
-            <code id="target-folder-path">files/1-ano/1-semestre/aac/teoricas/</code>
-          </div>
-
-          <div class="contrib-guide-box">
-            <div class="guide-step">
-              <span class="guide-icon">📂</span>
-              <div class="guide-text">
-                <strong>How it works:</strong> Click the button below to open the form. Simply <strong>drag &amp; drop your files</strong> (PDF, code, slides, zip) into the description box! A <strong>Pull Request</strong> will be automatically created on a new branch for <strong>@${escapeHtml(repoOwner)}</strong> to approve.
+        <!-- Form Panels Container -->
+        <div id="contrib-forms-wrapper">
+          <!-- Tab 1: File submission -->
+          <div id="tab-content-file" class="tab-pane">
+            <div class="form-row">
+              <div class="form-group">
+                <label for="contrib-year">Curricular Year</label>
+                <select id="contrib-year">
+                  <option value="1-ano">1st Year</option>
+                  <option value="2-ano">2nd Year</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="contrib-sem">Semester</label>
+                <select id="contrib-sem"></select>
               </div>
             </div>
-          </div>
 
-          <div class="modal-actions">
-            <a id="btn-submit-material-pr" class="btn btn-primary" href="#" target="_blank" rel="noopener">
-              Upload Files &amp; Open PR ↗
-            </a>
-          </div>
-        </div>
-
-        <!-- Tab 2: Date submission -->
-        <div id="tab-content-date" class="tab-pane" style="display:none;">
-          <div class="form-row">
-            <div class="form-group">
-              <label for="contrib-date-val">Event Date *</label>
-              <input type="date" id="contrib-date-val" required>
-            </div>
-            <div class="form-group">
-              <label for="contrib-date-type">Event Type</label>
-              <select id="contrib-date-type">
-                <option value="exams">Exam / Test</option>
-                <option value="presentation">Presentation / Defense</option>
-                <option value="deadline">Assignment Deadline</option>
-                <option value="semester">Semester Milestone</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label for="contrib-date-title">Event Description / Course *</label>
-            <input type="text" id="contrib-date-title" placeholder="e.g. CPAR Normal Exam or AAC WA2 Presentation">
-          </div>
-
-          <div class="form-group">
-            <label for="contrib-date-notes">Notes / Source Link <span style="font-size:0.76rem; color:var(--ink-faint); font-weight:normal;">(optional)</span></label>
-            <input type="text" id="contrib-date-notes" placeholder="e.g. Pedagogical calendar or professor confirmation">
-          </div>
-
-          <div class="target-folder-box">
-            <span class="folder-label">Destination in repository:</span>
-            <code>assets/data/site-data.js &rarr; calendar.dates</code>
-          </div>
-
-          <div class="contrib-guide-box">
-            <div class="guide-step">
-              <span class="guide-icon">📅</span>
-              <div class="guide-text">
-                <strong>How it works:</strong> Click the button below to submit the event details. A <strong>Pull Request</strong> will be automatically generated to add the date to the calendar for <strong>@${escapeHtml(repoOwner)}</strong> to approve.
+            <div class="form-row">
+              <div class="form-group">
+                <label for="contrib-uc">Course Unit</label>
+                <select id="contrib-uc"></select>
+              </div>
+              <div class="form-group">
+                <label for="contrib-cat">Material Category</label>
+                <select id="contrib-cat">
+                  <option value="teoricas">Lectures (slides, notes)</option>
+                  <option value="praticas">Labs (exercises, code)</option>
+                  <option value="trabalho">Assignments (project briefs)</option>
+                  <option value="exames">Exams (past tests)</option>
+                  <option value="books">Books &amp; References</option>
+                </select>
               </div>
             </div>
+
+            <div class="form-group">
+              <label for="contrib-author">Your Name / GitHub Handle <span style="font-size:0.76rem; color:var(--ink-faint); font-weight:normal;">(optional, for credits)</span></label>
+              <input type="text" id="contrib-author" placeholder="e.g. Diogo Silva or @diogocsilva12">
+            </div>
+
+            <div class="target-folder-box">
+              <span class="folder-label">Destination repository folder:</span>
+              <code id="target-folder-path">files/1-ano/1-semestre/aac/teoricas/</code>
+            </div>
+
+            <!-- Drag & Drop Box -->
+            <div id="dropzone-area" class="dropzone-area" role="button" tabindex="0" aria-label="Drop files here or click to browse">
+              <div class="dropzone-icon">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                  <polyline points="17 8 12 3 7 8"/>
+                  <line x1="12" y1="3" x2="12" y2="15"/>
+                </svg>
+              </div>
+              <div class="dropzone-title">Drag &amp; drop files here, or <span class="dropzone-browse">browse from PC</span></div>
+              <div class="dropzone-hint">PDFs, code (.c, .cu, .py), notebooks (.ipynb), slides, zips</div>
+              <input type="file" id="file-picker-input" multiple style="display: none;">
+            </div>
+
+            <!-- Staged Files List -->
+            <div id="staged-files-container" class="staged-files-container" style="display: none;">
+              <div class="staged-files-header">
+                <span id="staged-files-count">0 files selected</span>
+                <button type="button" id="btn-clear-staged" class="staged-file-remove" style="font-size:0.75rem; text-decoration:underline;">Clear all</button>
+              </div>
+              <div id="staged-files-list" class="staged-files-list"></div>
+            </div>
+
+            <div class="modal-actions">
+              <button type="button" id="btn-submit-files" class="btn btn-primary" disabled>
+                Submit Files &amp; Open PR
+              </button>
+            </div>
           </div>
 
-          <div class="modal-actions">
-            <a id="btn-submit-date-pr" class="btn btn-primary" href="#" target="_blank" rel="noopener">
-              Propose Date &amp; Open PR ↗
-            </a>
+          <!-- Tab 2: Date submission -->
+          <div id="tab-content-date" class="tab-pane" style="display:none;">
+            <div class="form-row">
+              <div class="form-group">
+                <label for="contrib-date-val">Event Date *</label>
+                <input type="date" id="contrib-date-val" required>
+              </div>
+              <div class="form-group">
+                <label for="contrib-date-type">Event Type</label>
+                <select id="contrib-date-type">
+                  <option value="exams">Exam / Test</option>
+                  <option value="presentation">Presentation / Defense</option>
+                  <option value="deadline">Assignment Deadline</option>
+                  <option value="semester">Semester Milestone</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="contrib-date-title">Event Title / Course *</label>
+              <input type="text" id="contrib-date-title" placeholder="e.g. CPAR Normal Exam or AAC WA2 Presentation">
+            </div>
+
+            <div class="form-group">
+              <label for="contrib-date-author">Your Name / GitHub Handle <span style="font-size:0.76rem; color:var(--ink-faint); font-weight:normal;">(optional)</span></label>
+              <input type="text" id="contrib-date-author" placeholder="e.g. João Alves or @joaoalves03">
+            </div>
+
+            <div class="target-folder-box">
+              <span class="folder-label">Destination in repository:</span>
+              <code>assets/data/site-data.js &rarr; calendar.dates</code>
+            </div>
+
+            <div class="modal-actions">
+              <button type="button" id="btn-submit-date" class="btn btn-primary" disabled>
+                Propose Date &amp; Open PR
+              </button>
+            </div>
           </div>
         </div>
+
+        <!-- Submission Progress View -->
+        <div id="contrib-progress" class="submission-progress-view" style="display: none;">
+          <div class="preview-spinner"></div>
+          <h3 id="progress-heading">Creating Pull Request...</h3>
+          <div id="progress-step-text" class="submission-step-log">Preparing files...</div>
+          <p style="font-size:0.82rem; color:var(--ink-faint); margin:0;">Automating branch creation and committing directly to repository.</p>
+        </div>
+
+        <!-- Submission Result View -->
+        <div id="contrib-result" class="submission-result-view" style="display: none;"></div>
       </div>
     </div>
   `;
@@ -900,15 +938,118 @@ function initContributeModal() {
   document.body.appendChild(modal);
 
   // -------------------------------------------------------------------
-  // Dropdown synchronization & URL building
+  // View State Switcher (forms / progress / result)
+  // -------------------------------------------------------------------
+  const formsWrapper = document.getElementById("contrib-forms-wrapper");
+  const progressView = document.getElementById("contrib-progress");
+  const resultView = document.getElementById("contrib-result");
+  const progressHeading = document.getElementById("progress-heading");
+  const progressStepText = document.getElementById("progress-step-text");
+
+  function showView(view) {
+    formsWrapper.style.display = view === "forms" ? "block" : "none";
+    progressView.style.display = view === "progress" ? "flex" : "none";
+    resultView.style.display = view === "result" ? "flex" : "none";
+  }
+
+  function resetContributeForm() {
+    stagedFiles = [];
+    updateStagedFilesUI();
+    document.getElementById("contrib-author").value = "";
+    document.getElementById("contrib-date-val").value = "";
+    document.getElementById("contrib-date-title").value = "";
+    document.getElementById("contrib-date-author").value = "";
+    checkDateInputs();
+    showView("forms");
+  }
+
+  function showResultSuccess(prUrl, prNumber, type) {
+    showView("result");
+    const isDate = type === "date";
+    const typeLabel = isDate ? "calendar date proposal" : "study materials";
+    resultView.innerHTML = `
+      <div class="result-icon">🎉</div>
+      <h3>Pull Request Successfully Created!</h3>
+      <div class="result-pr-pill">Pull Request #${prNumber}</div>
+      <p>
+        Your ${typeLabel} were added to a new branch and a Pull Request has been opened for <strong>@${escapeHtml(repoOwner)}</strong> to review and merge into <code>main</code>.
+      </p>
+      <div class="result-actions">
+        <a href="${prUrl}" target="_blank" rel="noopener" class="btn btn-primary">
+          View Pull Request #${prNumber} ↗
+        </a>
+        <button type="button" id="btn-submit-another" class="btn btn-secondary">
+          Submit More Content
+        </button>
+      </div>
+    `;
+    document.getElementById("btn-submit-another").addEventListener("click", resetContributeForm);
+  }
+
+  function showResultError(err, type) {
+    showView("result");
+    const errMsg = err.message || String(err);
+    const isUnconfigured = errMsg === "submission_api_not_configured" || errMsg.includes("Failed to fetch") || errMsg.includes("NetworkError");
+
+    let helpfulNotice = "";
+    if (isUnconfigured) {
+      helpfulNotice = `
+        <p style="font-size:0.84rem; color:var(--ink-soft); margin-top:8px;">
+          The automated PR backend needs to be connected. Maintainer (<strong>@${escapeHtml(repoOwner)}</strong>) can deploy the Cloudflare Worker in <code>serverless/worker.js</code> (takes 1 minute, free) and configure <code>submissionApiUrl</code> in <code>assets/data/site-data.js</code>.
+        </p>
+      `;
+    }
+
+    let fallbackUrl = `https://github.com/${repoOwner}/${repoName}/issues/new`;
+    if (type === "date") {
+      const d = document.getElementById("contrib-date-val").value.trim();
+      const t = document.getElementById("contrib-date-title").value.trim();
+      const params = new URLSearchParams({
+        template: "propose_date.yml",
+        title: t ? `[Date] ${t}` : "[Date] New Calendar Date",
+        date: d,
+      });
+      fallbackUrl += `?${params.toString()}`;
+    } else {
+      const ucVal = document.getElementById("contrib-uc").value;
+      const catVal = document.getElementById("contrib-cat").value;
+      const params = new URLSearchParams({
+        template: "submit_material.yml",
+        title: `[Material] New files for ${ucVal.toUpperCase()} (${catVal})`,
+        course: ucVal.toUpperCase(),
+      });
+      fallbackUrl += `?${params.toString()}`;
+    }
+
+    resultView.innerHTML = `
+      <div class="result-icon">⚠️</div>
+      <h3>Automated Submission Notice</h3>
+      <p style="color:#b3261e; font-weight:500;">
+        ${escapeHtml(errMsg === "submission_api_not_configured" ? "Automated PR microservice is not yet configured." : errMsg)}
+      </p>
+      ${helpfulNotice}
+      <div class="result-actions" style="margin-top:14px;">
+        <a href="${fallbackUrl}" target="_blank" rel="noopener" class="btn btn-primary">
+          Submit via GitHub Issue ↗
+        </a>
+        <button type="button" id="btn-back-to-form" class="btn btn-secondary">
+          Back to Form
+        </button>
+      </div>
+    `;
+    document.getElementById("btn-back-to-form").addEventListener("click", () => {
+      showView("forms");
+    });
+  }
+
+  // -------------------------------------------------------------------
+  // Dropdown Synchronization & Path Display
   // -------------------------------------------------------------------
   const yearSelect = document.getElementById("contrib-year");
   const semSelect = document.getElementById("contrib-sem");
   const ucSelect = document.getElementById("contrib-uc");
   const catSelect = document.getElementById("contrib-cat");
-  const fileTitleInput = document.getElementById("contrib-file-title");
   const pathEl = document.getElementById("target-folder-path");
-  const submitMaterialBtn = document.getElementById("btn-submit-material-pr");
 
   function updateSemesterDropdown() {
     const year = yearSelect.value;
@@ -932,92 +1073,208 @@ function initContributeModal() {
     const yearMapping = UC_MAPPING[year] || UC_MAPPING["1-ano"];
     const ucs = yearMapping[sem] || yearMapping["1-semestre"];
     ucSelect.innerHTML = ucs.map((u) => `<option value="${u.code}">${escapeHtml(u.name)}</option>`).join("");
-    updateMaterialLink();
+    updateTargetPath();
   }
 
-  function updateMaterialLink() {
+  function updateTargetPath() {
     const year = yearSelect.value;
-    const yearLabel = year === "2-ano" ? "2nd Year" : "1st Year";
     const sem = semSelect.value;
-    const semLabel = sem === "2-semestre" ? "2nd Semester" : "1st Semester";
-    const ucCode = ucSelect.value ? ucSelect.value.toUpperCase() : "COURSE";
-    const ucOption = ucSelect.options[ucSelect.selectedIndex];
-    const ucName = ucOption ? ucOption.text : ucCode;
-    const cat = catSelect.value;
-    const catFullName = CATEGORY_NAMES[cat] || "Lectures (lecture slides and lecture notes)";
-
-    const cleanPath = `files/${year}/${sem}/${ucSelect.value}/${cat}`;
-    if (pathEl) pathEl.textContent = `${cleanPath}/`;
-
-    const t = fileTitleInput.value.trim();
-    const issueTitle = t ? `[Material] ${ucCode} — ${t}` : `[Material] New files for ${ucCode} (${cat})`;
-
-    const description = t
-      ? `${t}\n\n**Destination directory**: \`${cleanPath}/\`\n\n*(Drag & drop your files, slides, or archives directly into this box!)*`
-      : `**Destination directory**: \`${cleanPath}/\`\n\n*(Drag & drop your files, slides, or archives directly into this box!)*`;
-
-    const params = new URLSearchParams({
-      template: "submit_material.yml",
-      title: issueTitle,
-      year: yearLabel,
-      semester: semLabel,
-      course: ucName,
-      category: catFullName,
-      description: description,
-    });
-
-    if (submitMaterialBtn) {
-      submitMaterialBtn.href = `https://github.com/${repoOwner}/${repoName}/issues/new?${params.toString()}`;
+    const uc = ucSelect.value || "aac";
+    const cat = catSelect.value || "teoricas";
+    if (pathEl) {
+      pathEl.textContent = `files/${year}/${sem}/${uc}/${cat}/`;
     }
   }
 
   yearSelect.addEventListener("change", updateSemesterDropdown);
   semSelect.addEventListener("change", updateUcDropdown);
-  ucSelect.addEventListener("change", updateMaterialLink);
-  catSelect.addEventListener("change", updateMaterialLink);
-  fileTitleInput.addEventListener("input", updateMaterialLink);
+  ucSelect.addEventListener("change", updateTargetPath);
+  catSelect.addEventListener("change", updateTargetPath);
 
   updateSemesterDropdown();
 
   // -------------------------------------------------------------------
-  // Date Form Synchronization & URL building
+  // Staged Files & Drag and Drop Handling
+  // -------------------------------------------------------------------
+  let stagedFiles = [];
+  const dropzone = document.getElementById("dropzone-area");
+  const filePicker = document.getElementById("file-picker-input");
+  const stagedContainer = document.getElementById("staged-files-container");
+  const stagedCount = document.getElementById("staged-files-count");
+  const stagedList = document.getElementById("staged-files-list");
+  const btnClearStaged = document.getElementById("btn-clear-staged");
+  const btnSubmitFiles = document.getElementById("btn-submit-files");
+
+  function updateStagedFilesUI() {
+    if (!stagedFiles.length) {
+      stagedContainer.style.display = "none";
+      btnSubmitFiles.disabled = true;
+      return;
+    }
+    stagedContainer.style.display = "block";
+    btnSubmitFiles.disabled = false;
+    stagedCount.textContent = `${stagedFiles.length} file${stagedFiles.length > 1 ? "s" : ""} selected`;
+    stagedList.innerHTML = "";
+
+    stagedFiles.forEach((f, idx) => {
+      const item = document.createElement("div");
+      item.className = "staged-file-item";
+      item.innerHTML = `
+        <span class="staged-file-name" title="${escapeHtml(f.name)}">${escapeHtml(f.name)}</span>
+        <span class="staged-file-size">${formatUploadFileSize(f.size)}</span>
+        <button type="button" class="staged-file-remove" data-idx="${idx}" aria-label="Remove">✕</button>
+      `;
+      item.querySelector(".staged-file-remove").addEventListener("click", () => {
+        stagedFiles.splice(idx, 1);
+        updateStagedFilesUI();
+      });
+      stagedList.appendChild(item);
+    });
+  }
+
+  function handleAddFiles(files) {
+    for (let i = 0; i < files.length; i++) {
+      const f = files[i];
+      if (!stagedFiles.some((existing) => existing.name === f.name && existing.size === f.size)) {
+        stagedFiles.push(f);
+      }
+    }
+    updateStagedFilesUI();
+  }
+
+  dropzone.addEventListener("click", () => filePicker.click());
+  filePicker.addEventListener("change", (e) => {
+    if (e.target.files) handleAddFiles(e.target.files);
+    filePicker.value = "";
+  });
+
+  dropzone.addEventListener("dragover", (e) => {
+    e.preventDefault();
+    dropzone.classList.add("drag-active");
+  });
+  dropzone.addEventListener("dragleave", () => {
+    dropzone.classList.remove("drag-active");
+  });
+  dropzone.addEventListener("drop", (e) => {
+    e.preventDefault();
+    dropzone.classList.remove("drag-active");
+    if (e.dataTransfer && e.dataTransfer.files) {
+      handleAddFiles(e.dataTransfer.files);
+    }
+  });
+
+  btnClearStaged.addEventListener("click", () => {
+    stagedFiles = [];
+    updateStagedFilesUI();
+  });
+
+  // -------------------------------------------------------------------
+  // Submit Files Handler
+  // -------------------------------------------------------------------
+  btnSubmitFiles.addEventListener("click", async () => {
+    if (!stagedFiles.length) return;
+
+    showView("progress");
+    progressHeading.textContent = "Uploading Materials & Creating PR...";
+    progressStepText.textContent = "Reading and encoding files...";
+
+    try {
+      const filePayloads = [];
+      for (let i = 0; i < stagedFiles.length; i++) {
+        const file = stagedFiles[i];
+        progressStepText.textContent = `Reading file (${i + 1}/${stagedFiles.length}): ${file.name}...`;
+        const base64 = await readFileAsBase64(file);
+        filePayloads.push({
+          name: file.name,
+          content: base64,
+        });
+      }
+
+      const apiUrl = (SITE_DATA.config && SITE_DATA.config.submissionApiUrl) || "";
+      if (!apiUrl) {
+        throw new Error("submission_api_not_configured");
+      }
+
+      progressStepText.textContent = "Creating branch and committing files...";
+
+      const res = await fetch(`${apiUrl.replace(/\/+$/, "")}/submit-files`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          year: yearSelect.value,
+          semester: semSelect.value,
+          course: ucSelect.value,
+          category: catSelect.value,
+          author: document.getElementById("contrib-author").value.trim(),
+          files: filePayloads,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || `Failed with HTTP ${res.status}`);
+      }
+
+      showResultSuccess(data.pr_url, data.pr_number, "materials");
+    } catch (err) {
+      showResultError(err, "materials");
+    }
+  });
+
+  // -------------------------------------------------------------------
+  // Date Form Validation & Submission
   // -------------------------------------------------------------------
   const dateValInput = document.getElementById("contrib-date-val");
   const dateTitleInput = document.getElementById("contrib-date-title");
   const dateTypeSelect = document.getElementById("contrib-date-type");
-  const dateNotesInput = document.getElementById("contrib-date-notes");
-  const submitDateBtn = document.getElementById("btn-submit-date-pr");
+  const dateAuthorInput = document.getElementById("contrib-date-author");
+  const btnSubmitDate = document.getElementById("btn-submit-date");
 
-  function updateDateLink() {
-    const d = dateValInput.value.trim();
-    const t = dateTitleInput.value.trim();
-    const typeKey = dateTypeSelect.value;
-    const typeFullName = EVENT_TYPE_NAMES[typeKey] || "Exam (Normal or Resit period)";
-    const notes = dateNotesInput.value.trim();
-
-    const titleParam = t
-      ? (d ? `[Date] ${t} (${d})` : `[Date] ${t}`)
-      : `[Date] New Calendar Date Proposal`;
-
-    const params = new URLSearchParams({
-      template: "propose_date.yml",
-      title: titleParam,
-      date: d,
-      type: typeFullName,
-      notes: notes,
-    });
-
-    if (submitDateBtn) {
-      submitDateBtn.href = `https://github.com/${repoOwner}/${repoName}/issues/new?${params.toString()}`;
-    }
+  function checkDateInputs() {
+    btnSubmitDate.disabled = !dateValInput.value.trim() || !dateTitleInput.value.trim();
   }
 
-  dateValInput.addEventListener("input", updateDateLink);
-  dateTitleInput.addEventListener("input", updateDateLink);
-  dateTypeSelect.addEventListener("change", updateDateLink);
-  dateNotesInput.addEventListener("input", updateDateLink);
+  dateValInput.addEventListener("input", checkDateInputs);
+  dateTitleInput.addEventListener("input", checkDateInputs);
 
-  updateDateLink();
+  btnSubmitDate.addEventListener("click", async () => {
+    const d = dateValInput.value.trim();
+    const t = dateTitleInput.value.trim();
+    if (!d || !t) return;
+
+    showView("progress");
+    progressHeading.textContent = "Proposing Academic Calendar Date...";
+    progressStepText.textContent = "Connecting to automated PR service...";
+
+    try {
+      const apiUrl = (SITE_DATA.config && SITE_DATA.config.submissionApiUrl) || "";
+      if (!apiUrl) {
+        throw new Error("submission_api_not_configured");
+      }
+
+      progressStepText.textContent = "Inserting date into calendar and opening PR...";
+
+      const res = await fetch(`${apiUrl.replace(/\/+$/, "")}/submit-date`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          date: d,
+          title: t,
+          type: dateTypeSelect.value,
+          author: dateAuthorInput.value.trim(),
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || `Failed with HTTP ${res.status}`);
+      }
+
+      showResultSuccess(data.pr_url, data.pr_number, "date");
+    } catch (err) {
+      showResultError(err, "date");
+    }
+  });
 
   // -------------------------------------------------------------------
   // Modal Tabs
@@ -1075,6 +1332,13 @@ function openContributeModalWithPrefill(opts = {}) {
   const modal = document.getElementById("contribute-modal");
   if (!modal) return;
   modal.style.display = "flex";
+
+  const formsWrapper = document.getElementById("contrib-forms-wrapper");
+  const progressView = document.getElementById("contrib-progress");
+  const resultView = document.getElementById("contrib-result");
+  if (formsWrapper) formsWrapper.style.display = "block";
+  if (progressView) progressView.style.display = "none";
+  if (resultView) resultView.style.display = "none";
 
   const targetTab = opts.tab || "file";
   if (targetTab === "date") {

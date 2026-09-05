@@ -185,6 +185,7 @@ function generateSiteData() {
       repoOwner: 'diogocsilva12',
       repoName: 'mca-uminho',
       baseBranch: 'main',
+      submissionApiUrl: '',
     },
   };
 

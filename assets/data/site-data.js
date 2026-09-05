@@ -2263,6 +2263,7 @@ const SITE_DATA = {
   "config": {
     "repoOwner": "diogocsilva12",
     "repoName": "mca-uminho",
-    "baseBranch": "main"
+    "baseBranch": "main",
+    "submissionApiUrl": ""
   }
 };
