@@ -648,8 +648,14 @@ const SITE_DATA = {
                         ]
                   },
                   {
+                        "code": "DCCT",
+                        "name": "Data Classification and Clustering Techniques (Option I)",
+                        "description": "Supervised and unsupervised learning, high-dimensional data summarization, clustering algorithms, and ROC analysis.",
+                        "files": []
+                  },
+                  {
                         "code": "SAC",
-                        "name": "Computer Systems and Architectures",
+                        "name": "Computer Systems and Architectures (Option I)",
                         "description": "Computer organization, memory hierarchy, superscalar execution, and performance profiling with PAPI.",
                         "files": [
                               {
@@ -2118,8 +2124,79 @@ const SITE_DATA = {
             ]
       }
 ],
-      // 2nd Year — Dissertation and specialization courses (no materials shared at the moment)
-      2: [],
+      // 2nd Year — Specialization options & Dissertation / Project / Internship
+      2: [
+        {
+          "semester": "1st Semester (Specialization & Options)",
+          "subjects": [
+            {
+              "code": "NIC",
+              "name": "Nature Inspired Computation (Option II/III)",
+              "description": "Evolutionary computation, genetic algorithms, swarm intelligence, artificial immune systems, and bio-inspired optimization.",
+              "files": []
+            },
+            {
+              "code": "DS",
+              "name": "Data Security (Option II/III)",
+              "description": "Cryptography, secure multi-party computation, differential privacy, access control, and data integrity in distributed environments.",
+              "files": []
+            },
+            {
+              "code": "CCAS",
+              "name": "Cloud Computing Applications and Services (Option II/III)",
+              "description": "Cloud architectures, virtualization, container orchestration with Kubernetes, serverless computing, and microservices.",
+              "files": []
+            },
+            {
+              "code": "HPHCI",
+              "name": "High Performance Hybrid Computing Infrastructures (Option II/III)",
+              "description": "Heterogeneous computing, CPU-GPU-FPGA systems, high-speed interconnects, and hardware acceleration for HPC.",
+              "files": []
+            },
+            {
+              "code": "ODAC",
+              "name": "Orchestration of Distributed Advanced Computing (Option II/III)",
+              "description": "Distributed workflow management, Slurm job scheduling, fault tolerance, resource orchestration, and edge-to-cloud computing.",
+              "files": []
+            },
+            {
+              "code": "BSB",
+              "name": "Bioinformatics and Systems Biology (Option IV)",
+              "description": "Computational genomics, sequence analysis, biological network modeling, molecular dynamics, and biomedical HPC.",
+              "files": []
+            },
+            {
+              "code": "CR",
+              "name": "Computational Rheology (Option IV)",
+              "description": "Non-Newtonian fluid mechanics, viscoelastic constitutive equations, finite volume simulation, and polymer processing.",
+              "files": []
+            },
+            {
+              "code": "DML",
+              "name": "Data and Machine Learning (Option IV)",
+              "description": "Machine learning workflows, deep neural networks, distributed training on HPC clusters, and model deployment.",
+              "files": []
+            },
+            {
+              "code": "DISS",
+              "name": "Dissertation / Project / Internship (Part I)",
+              "description": "Problem formulation, state-of-the-art literature review, research methodology design, and preliminary defense.",
+              "files": []
+            }
+          ]
+        },
+        {
+          "semester": "2nd Semester (Dissertation Defense)",
+          "subjects": [
+            {
+              "code": "DISS",
+              "name": "Dissertation / Project / Internship (Part II)",
+              "description": "Full research execution, implementation, experimental evaluation on HPC clusters, thesis write-up, and final public defense.",
+              "files": []
+            }
+          ]
+        }
+      ],
     },
   },
 

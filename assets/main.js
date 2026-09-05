@@ -17,6 +17,15 @@ function formatDate(iso) {
   return d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
 }
 
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 // ---------------------------------------------------------------------
 // Files page
 // ---------------------------------------------------------------------
@@ -32,21 +41,33 @@ function renderFiles(year) {
 
   const semesters = SITE_DATA.files.years[year] || [];
 
-  if (semesters.length === 0 || semesters.every((s) => s.subjects.length === 0)) {
+  if (semesters.length === 0) {
     root.innerHTML = `
       <div class="empty-state">
-        <h3>No study materials shared yet for this year</h3>
-        <p>No materials have been submitted for this year yet. If you have lecture notes, problem sets, or lab guides to share with your peers, please open a Pull Request on the repository.</p>
+        <h3>No courses available for this year</h3>
+        <p>Curriculum information will be published soon.</p>
       </div>`;
     updateSearchStatus(0, 0);
     return;
+  }
+
+  // 2nd Year intro banner if on Year 2 and not searching
+  if (year === 2 && !currentSearchQuery.trim()) {
+    const banner = document.createElement("div");
+    banner.className = "year-intro-banner";
+    banner.innerHTML = `
+      <div class="year-intro-badge">2nd Year Curriculum</div>
+      <h3>Specialization &amp; Dissertation Year</h3>
+      <p>Year 2 focuses on advanced vertical options (Option II/III &amp; Option IV) in the 1st semester, followed by the research dissertation, capstone project, or industrial internship. Browse the course units below or contribute study materials.</p>
+    `;
+    root.appendChild(banner);
   }
 
   let totalVisibleFiles = 0;
   let totalVisibleSubjects = 0;
   const q = currentSearchQuery.trim().toLowerCase();
 
-  semesters.forEach((sem) => {
+  semesters.forEach((sem, sIdx) => {
     const block = document.createElement("div");
     block.className = "semester-block";
 
@@ -59,7 +80,7 @@ function renderFiles(year) {
 
     sem.subjects.forEach((subject, i) => {
       // Filter files if searching
-      const matchingFiles = subject.files.filter((f) => {
+      const matchingFiles = (subject.files || []).filter((f) => {
         if (!q) return true;
         const inFileName = f.name.toLowerCase().includes(q);
         const inCat = (f.category || "").toLowerCase().includes(q);
@@ -69,7 +90,14 @@ function renderFiles(year) {
         return inFileName || inCat || inExt || inSubjName || inSubjCode;
       });
 
-      if (q && matchingFiles.length === 0) {
+      const subjectNameMatches = q && (
+        subject.name.toLowerCase().includes(q) ||
+        (subject.code || "").toLowerCase().includes(q) ||
+        (subject.description || "").toLowerCase().includes(q)
+      );
+
+      // If searching and neither files nor subject info match, hide
+      if (q && matchingFiles.length === 0 && !subjectNameMatches) {
         return;
       }
 
@@ -79,49 +107,71 @@ function renderFiles(year) {
 
       const subj = document.createElement("div");
       subj.className = "subject";
-      const shouldOpen = q ? true : (i === 0);
+      // Open by default if searching, or first subject of first semester, or year 2
+      const shouldOpen = q ? true : (sIdx === 0 && i === 0);
       subj.dataset.open = shouldOpen ? "true" : "false";
 
-      // Group files by category
-      const categories = {};
-      matchingFiles.forEach((f) => {
-        const cat = f.category || "General";
-        if (!categories[cat]) categories[cat] = [];
-        categories[cat].push(f);
-      });
-
-      const catKeys = Object.keys(categories);
       let filesHtml = "";
 
-      if (catKeys.length > 1) {
-        catKeys.forEach((cat) => {
-          filesHtml += `
-            <div class="category-section">
-              <div class="category-heading">${cat} <span class="category-count">(${categories[cat].length})</span></div>
-              <div class="category-files">
-                ${categories[cat].map(renderFileRow).join("")}
-              </div>
-            </div>`;
+      if (matchingFiles.length > 0) {
+        // Group files by category
+        const categories = {};
+        matchingFiles.forEach((f) => {
+          const cat = f.category || "General";
+          if (!categories[cat]) categories[cat] = [];
+          categories[cat].push(f);
         });
+
+        const catKeys = Object.keys(categories);
+        if (catKeys.length > 1) {
+          catKeys.forEach((cat) => {
+            filesHtml += `
+              <div class="category-section">
+                <div class="category-heading">${escapeHtml(cat)} <span class="category-count">(${categories[cat].length})</span></div>
+                <div class="category-files">
+                  ${categories[cat].map(renderFileRow).join("")}
+                </div>
+              </div>`;
+          });
+        } else {
+          filesHtml = `
+            <div class="category-files">
+              ${matchingFiles.map(renderFileRow).join("")}
+            </div>`;
+        }
       } else {
+        const semCode = sem.semester.toLowerCase().includes("1st") ? "1-semestre" : "2-semestre";
         filesHtml = `
-          <div class="category-files">
-            ${matchingFiles.map(renderFileRow).join("")}
+          <div class="subject-empty-state">
+            <div class="subject-empty-text">
+              No materials uploaded yet for <strong>${escapeHtml(subject.name)}</strong>.
+            </div>
+            <button type="button" class="btn btn-secondary btn-sm" 
+                    data-open-contribute="file"
+                    data-prefill-year="${year}-ano"
+                    data-prefill-sem="${semCode}"
+                    data-prefill-uc="${subject.code.toLowerCase()}">
+              + Add file for this course
+            </button>
           </div>`;
       }
+
+      const filesCountLabel = matchingFiles.length > 0 
+        ? `<span>${matchingFiles.length} file${matchingFiles.length === 1 ? "" : "s"}</span>`
+        : `<span class="empty-count">0 files</span>`;
 
       subj.innerHTML = `
         <button class="subject-toggle" aria-expanded="${shouldOpen}">
           <div class="subject-title-area">
-            ${subject.code ? `<span class="subject-code-pill">${subject.code}</span>` : ""}
-            <span class="subject-name">${subject.name}</span>
+            ${subject.code ? `<span class="subject-code-pill">${escapeHtml(subject.code)}</span>` : ""}
+            <span class="subject-name">${escapeHtml(subject.name)}</span>
           </div>
           <span class="subject-meta">
-            <span>${matchingFiles.length} file${matchingFiles.length === 1 ? "" : "s"}</span>
+            ${filesCountLabel}
             <span class="subject-chevron" aria-hidden="true"></span>
           </span>
         </button>
-        ${subject.description ? `<p class="subject-desc">${subject.description}</p>` : ""}
+        ${subject.description ? `<p class="subject-desc">${escapeHtml(subject.description)}</p>` : ""}
         <div class="subject-files">
           ${filesHtml}
         </div>`;
@@ -141,13 +191,16 @@ function renderFiles(year) {
     }
   });
 
+  // Attach preview modal openers on file rows
+  attachFileRowEvents(root);
+
   if (q) {
     updateSearchStatus(totalVisibleFiles, totalVisibleSubjects);
-    if (totalVisibleFiles === 0) {
+    if (totalVisibleSubjects === 0) {
       root.innerHTML = `
         <div class="empty-state">
-          <h3>No files found matching "${escapeHtml(currentSearchQuery)}"</h3>
-          <p>Try searching for broader keywords, subject names, file formats (e.g. pdf, zip), or categories (e.g. lectures, labs, exams).</p>
+          <h3>No results found for "${escapeHtml(currentSearchQuery)}"</h3>
+          <p>Try searching for broader keywords, subject acronyms (e.g. AAC, NIC, CPAR), file extensions (e.g. pdf, zip), or categories (e.g. lectures, labs).</p>
         </div>`;
     }
   } else {
@@ -157,21 +210,72 @@ function renderFiles(year) {
 
 function renderFileRow(f) {
   return `
-    <a class="file-row" href="${f.url}" download target="_blank" rel="noopener">
-      <span class="file-ext ext-${f.type}">${f.type}</span>
+    <div class="file-row" role="button" tabindex="0" 
+         data-file-url="${escapeHtml(f.url)}" 
+         data-file-name="${escapeHtml(f.name)}" 
+         data-file-type="${escapeHtml(f.type)}" 
+         data-file-size="${escapeHtml(f.size || "")}">
+      <span class="file-ext ext-${escapeHtml(f.type)}">${escapeHtml(f.type)}</span>
       <span class="file-name">${escapeHtml(f.name)}</span>
       ${f.category ? `<span class="file-category-badge">${escapeHtml(f.category)}</span>` : ""}
-      <span class="file-size">${f.size}</span>
-      <span class="file-download-icon" aria-hidden="true" title="Download">↓</span>
-    </a>`;
+      <span class="file-size">${escapeHtml(f.size || "")}</span>
+      <div class="file-row-actions">
+        <button type="button" class="file-action-btn file-preview-btn" title="Preview file">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+            <circle cx="12" cy="12" r="3"></circle>
+          </svg>
+          <span>Preview</span>
+        </button>
+        <a class="file-action-btn file-download-btn" href="${escapeHtml(f.url)}" download="${escapeHtml(f.name)}" title="Download file" onclick="event.stopPropagation()">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+          <span>Download</span>
+        </a>
+      </div>
+    </div>`;
 }
 
-function escapeHtml(str) {
-  return String(str)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
+function attachFileRowEvents(container) {
+  container.querySelectorAll(".file-row").forEach((row) => {
+    const fileData = {
+      url: row.dataset.fileUrl,
+      name: row.dataset.fileName,
+      type: row.dataset.fileType,
+      size: row.dataset.fileSize,
+    };
+
+    row.addEventListener("click", (e) => {
+      // If clicking directly on the download button, let it download without opening preview
+      if (e.target.closest(".file-download-btn")) {
+        return;
+      }
+      openFilePreview(fileData);
+    });
+
+    row.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        openFilePreview(fileData);
+      }
+    });
+  });
+
+  // Also bind any contribute buttons inside subject empty states
+  container.querySelectorAll("[data-open-contribute]").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      openContributeModalWithPrefill({
+        tab: btn.dataset.openContribute,
+        year: btn.dataset.prefillYear,
+        sem: btn.dataset.prefillSem,
+        uc: btn.dataset.prefillUc,
+      });
+    });
+  });
 }
 
 function updateSearchStatus(filesCount, subjCount) {
@@ -186,7 +290,7 @@ function updateSearchStatus(filesCount, subjCount) {
 
   statusEl.style.display = "flex";
   statusEl.innerHTML = `
-    <span>Found <strong>${filesCount}</strong> file${filesCount === 1 ? "" : "s"} across <strong>${subjCount}</strong> subject${subjCount === 1 ? "" : "s"} matching "<em>${escapeHtml(currentSearchQuery)}</em>"</span>
+    <span>Found <strong>${filesCount}</strong> file${filesCount === 1 ? "" : "s"} across <strong>${subjCount}</strong> course${subjCount === 1 ? "" : "s"} matching "<em>${escapeHtml(currentSearchQuery)}</em>"</span>
     <button type="button" class="btn-clear-inline" onclick="clearSearch()">Clear search</button>
   `;
 }
@@ -251,6 +355,268 @@ function initYearSwitch() {
 }
 
 // ---------------------------------------------------------------------
+// File Preview Modal
+// ---------------------------------------------------------------------
+
+let previewModalEl = null;
+
+function initPreviewModal() {
+  if (previewModalEl) return;
+
+  previewModalEl = document.createElement("div");
+  previewModalEl.id = "file-preview-modal";
+  previewModalEl.className = "modal-overlay";
+  previewModalEl.style.display = "none";
+  previewModalEl.setAttribute("role", "dialog");
+  previewModalEl.setAttribute("aria-modal", "true");
+  previewModalEl.setAttribute("aria-labelledby", "preview-file-name");
+
+  previewModalEl.innerHTML = `
+    <div class="preview-modal-card">
+      <div class="preview-modal-header">
+        <div class="preview-header-info">
+          <span id="preview-file-ext" class="file-ext"></span>
+          <span id="preview-file-name" class="file-name"></span>
+          <span id="preview-file-size" class="file-size"></span>
+        </div>
+        <div class="preview-header-actions">
+          <a id="preview-open-tab-btn" class="file-action-btn" href="#" target="_blank" rel="noopener" title="Open file in new tab">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+              <polyline points="15 3 21 3 21 9"></polyline>
+              <line x1="10" y1="14" x2="21" y2="3"></line>
+            </svg>
+            <span>Open in Tab</span>
+          </a>
+          <a id="preview-download-btn" class="file-action-btn file-download-btn" href="#" download title="Download file">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            <span>Download</span>
+          </a>
+          <button type="button" class="modal-close-btn" id="preview-close-btn" aria-label="Close preview">✕</button>
+        </div>
+      </div>
+      <div class="preview-modal-body" id="preview-modal-body">
+        <div class="preview-loading">
+          <div class="preview-spinner"></div>
+          <span>Loading preview...</span>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(previewModalEl);
+
+  const closeBtn = previewModalEl.querySelector("#preview-close-btn");
+  closeBtn.addEventListener("click", closeFilePreview);
+
+  previewModalEl.addEventListener("click", (e) => {
+    if (e.target === previewModalEl) closeFilePreview();
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && previewModalEl.style.display !== "none") {
+      closeFilePreview();
+    }
+  });
+}
+
+function closeFilePreview() {
+  if (!previewModalEl) return;
+  previewModalEl.style.display = "none";
+  const body = previewModalEl.querySelector("#preview-modal-body");
+  if (body) body.innerHTML = "";
+}
+
+function openFilePreview(file) {
+  initPreviewModal();
+
+  const extEl = previewModalEl.querySelector("#preview-file-ext");
+  const nameEl = previewModalEl.querySelector("#preview-file-name");
+  const sizeEl = previewModalEl.querySelector("#preview-file-size");
+  const tabBtn = previewModalEl.querySelector("#preview-open-tab-btn");
+  const downBtn = previewModalEl.querySelector("#preview-download-btn");
+  const body = previewModalEl.querySelector("#preview-modal-body");
+
+  const ext = (file.type || "file").toLowerCase();
+  extEl.className = `file-ext ext-${ext}`;
+  extEl.textContent = ext;
+  nameEl.textContent = file.name;
+  sizeEl.textContent = file.size ? `(${file.size})` : "";
+
+  tabBtn.href = file.url;
+  downBtn.href = file.url;
+  downBtn.setAttribute("download", file.name);
+
+  previewModalEl.style.display = "flex";
+
+  // PDF Preview
+  if (ext === "pdf") {
+    body.innerHTML = `
+      <iframe class="preview-pdf-frame" src="${file.url}#toolbar=1" title="${escapeHtml(file.name)}"></iframe>
+    `;
+    return;
+  }
+
+  // Image Preview
+  if (["png", "jpg", "jpeg", "svg", "gif", "webp"].includes(ext)) {
+    body.innerHTML = `
+      <div class="preview-image-wrap">
+        <img src="${file.url}" alt="${escapeHtml(file.name)}">
+      </div>
+    `;
+    return;
+  }
+
+  // Code & Text Previews
+  const codeExts = ["c", "cpp", "cu", "h", "py", "sh", "txt", "m", "file", "md", "json", "yml", "yaml"];
+  if (codeExts.includes(ext)) {
+    body.innerHTML = `
+      <div class="preview-loading">
+        <div class="preview-spinner"></div>
+        <span>Loading text content...</span>
+      </div>
+    `;
+
+    fetch(file.url)
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.text();
+      })
+      .then((text) => {
+        const lines = text.split("\n").length;
+        body.innerHTML = `
+          <div class="preview-code-wrap">
+            <div class="preview-code-header">
+              <span>${ext.toUpperCase()} Source · ${lines} lines · ${file.size || ""}</span>
+              <button type="button" class="file-action-btn" id="btn-copy-code">
+                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                </svg>
+                <span id="copy-btn-text">Copy code</span>
+              </button>
+            </div>
+            <pre class="preview-code-content"><code>${escapeHtml(text)}</code></pre>
+          </div>
+        `;
+
+        const copyBtn = body.querySelector("#btn-copy-code");
+        const copyText = body.querySelector("#copy-btn-text");
+        copyBtn.addEventListener("click", () => {
+          navigator.clipboard.writeText(text).then(() => {
+            copyText.textContent = "Copied!";
+            setTimeout(() => { copyText.textContent = "Copy code"; }, 2000);
+          }).catch(() => {
+            copyText.textContent = "Error copying";
+          });
+        });
+      })
+      .catch((err) => {
+        body.innerHTML = `
+          <div class="preview-unsupported-card">
+            <div class="unsupported-icon">📄</div>
+            <h3>Unable to fetch code preview inline</h3>
+            <p>Your browser security settings or offline file protocol blocked inline fetching. You can open or download the file directly.</p>
+            <div style="display:flex; gap:10px; margin-top:10px;">
+              <a class="btn btn-primary btn-sm" href="${file.url}" target="_blank" rel="noopener">Open in Tab ↗</a>
+              <a class="btn btn-secondary btn-sm" href="${file.url}" download="${escapeHtml(file.name)}">Download</a>
+            </div>
+          </div>
+        `;
+      });
+    return;
+  }
+
+  // Jupyter Notebook (.ipynb)
+  if (ext === "ipynb") {
+    body.innerHTML = `
+      <div class="preview-loading">
+        <div class="preview-spinner"></div>
+        <span>Rendering Jupyter Notebook...</span>
+      </div>
+    `;
+
+    fetch(file.url)
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      })
+      .then((nb) => {
+        let cellsHtml = "";
+        const cells = nb.cells || [];
+        cells.forEach((cell, idx) => {
+          const rawSource = Array.isArray(cell.source) ? cell.source.join("") : (cell.source || "");
+          if (cell.cell_type === "markdown") {
+            cellsHtml += `
+              <div class="notebook-cell">
+                <div class="notebook-cell-markdown">${escapeHtml(rawSource).replace(/\n/g, "<br>")}</div>
+              </div>`;
+          } else if (cell.cell_type === "code") {
+            let outputText = "";
+            if (cell.outputs && cell.outputs.length) {
+              cell.outputs.forEach((out) => {
+                if (out.text) {
+                  outputText += (Array.isArray(out.text) ? out.text.join("") : out.text);
+                } else if (out.data && out.data["text/plain"]) {
+                  const plain = out.data["text/plain"];
+                  outputText += (Array.isArray(plain) ? plain.join("") : plain);
+                }
+              });
+            }
+            cellsHtml += `
+              <div class="notebook-cell">
+                <div class="notebook-cell-prompt">In [${cell.execution_count ?? " "}]:</div>
+                <pre class="notebook-cell-code"><code>${escapeHtml(rawSource)}</code></pre>
+                ${outputText ? `<pre class="notebook-cell-output">${escapeHtml(outputText)}</pre>` : ""}
+              </div>`;
+          }
+        });
+
+        body.innerHTML = `
+          <div class="preview-notebook-wrap">
+            <div class="preview-code-header">
+              <span>Jupyter Notebook · ${cells.length} cells</span>
+            </div>
+            ${cellsHtml || "<p>Notebook is empty.</p>"}
+          </div>
+        `;
+      })
+      .catch(() => {
+        body.innerHTML = `
+          <div class="preview-unsupported-card">
+            <div class="unsupported-icon">📓</div>
+            <h3>Jupyter Notebook Preview</h3>
+            <p>Download this notebook or open it in JupyterLab / VS Code to run interactive cells.</p>
+            <div style="display:flex; gap:10px; margin-top:10px;">
+              <a class="btn btn-primary btn-sm" href="${file.url}" download="${escapeHtml(file.name)}">Download Notebook (.ipynb)</a>
+              <a class="btn btn-secondary btn-sm" href="${file.url}" target="_blank" rel="noopener">Raw JSON ↗</a>
+            </div>
+          </div>
+        `;
+      });
+    return;
+  }
+
+  // ZIP / PPTX / Binary / Fallback
+  const icon = ext === "zip" ? "📦" : (ext === "pptx" ? "📊" : "📁");
+  body.innerHTML = `
+    <div class="preview-unsupported-card">
+      <div class="unsupported-icon">${icon}</div>
+      <h3>${escapeHtml(file.name)}</h3>
+      <p>Direct in-browser preview is not available for <strong>.${ext.toUpperCase()}</strong> files (${file.size || "Unknown size"}).</p>
+      <div style="display:flex; gap:10px; margin-top:10px;">
+        <a class="btn btn-primary btn-sm" href="${file.url}" download="${escapeHtml(file.name)}">Download ${ext.toUpperCase()}</a>
+        <a class="btn btn-secondary btn-sm" href="${file.url}" target="_blank" rel="noopener">Open Directly ↗</a>
+      </div>
+    </div>
+  `;
+}
+
+// ---------------------------------------------------------------------
 // Calendar page
 // ---------------------------------------------------------------------
 
@@ -268,8 +634,8 @@ function renderCalendarDates() {
       <div class="date-row" style="${isPast ? "opacity:0.45" : ""}">
         <time datetime="${d.date}">${formatDate(d.date)}</time>
         <div>
-          <div class="date-label">${d.label}</div>
-          <span class="date-tag date-tag-${d.tag}">${d.tag}</span>
+          <div class="date-label">${escapeHtml(d.label)}</div>
+          <span class="date-tag date-tag-${escapeHtml(d.tag)}">${escapeHtml(d.tag)}</span>
         </div>
       </div>`;
     })
@@ -337,6 +703,43 @@ function initScheduleLinks() {
 // Contribution feature & Modal
 // ---------------------------------------------------------------------
 
+const UC_MAPPING = {
+  "1-ano": {
+    "1-semestre": [
+      { code: "aac", name: "AAC — Advanced Computer Architectures" },
+      { code: "cpar", name: "CPAR — Parallel Computing" },
+      { code: "fced", name: "FCED — High-Performance Computing Tools" },
+      { code: "sac", name: "SAC — Computer Systems & Architectures (Option I)" },
+      { code: "dcct", name: "DCCT — Data Classification & Clustering (Option I)" },
+      { code: "sne", name: "SNE — Numerical Simulation in Engineering" },
+      { code: "vc", name: "VC — Scientific Visualization" },
+    ],
+    "2-semestre": [
+      { code: "aded", name: "ADED — High-Performance Data Analysis" },
+      { code: "ap", name: "AP — Parallel Algorithms" },
+      { code: "chle", name: "CHLE — Large-Scale Hybrid Computing" },
+      { code: "pced", name: "PCED — Project in High Performance Computing" },
+      { code: "sade", name: "SADE — Efficient Storage Systems" },
+    ],
+  },
+  "2-ano": {
+    "1-semestre": [
+      { code: "nic", name: "NIC — Nature Inspired Computation (Option II/III)" },
+      { code: "ds", name: "DS — Data Security (Option II/III)" },
+      { code: "ccas", name: "CCAS — Cloud Computing Applications & Services (Option II/III)" },
+      { code: "hphci", name: "HPHCI — High Performance Hybrid Computing Infrastructures (Option II/III)" },
+      { code: "odac", name: "ODAC — Orchestration of Distributed Advanced Computing (Option II/III)" },
+      { code: "bsb", name: "BSB — Bioinformatics & Systems Biology (Option IV)" },
+      { code: "cr", name: "CR — Computational Rheology (Option IV)" },
+      { code: "dml", name: "DML — Data and Machine Learning (Option IV)" },
+      { code: "diss", name: "DISS — Dissertation / Project / Internship (Part I)" },
+    ],
+    "2-semestre": [
+      { code: "diss", name: "DISS — Dissertation / Project / Internship (Part II)" },
+    ],
+  },
+};
+
 function initContributeModal() {
   if (!document.getElementById("contribute-modal")) {
     const modal = document.createElement("div");
@@ -368,7 +771,7 @@ function initContributeModal() {
           <div id="tab-content-file" class="tab-pane">
             <div class="form-row">
               <div class="form-group">
-                <label for="contrib-year">Year</label>
+                <label for="contrib-year">Curricular Year</label>
                 <select id="contrib-year">
                   <option value="1-ano">1st Year</option>
                   <option value="2-ano">2nd Year</option>
@@ -376,10 +779,7 @@ function initContributeModal() {
               </div>
               <div class="form-group">
                 <label for="contrib-sem">Semester</label>
-                <select id="contrib-sem">
-                  <option value="1-semestre">1st Semester</option>
-                  <option value="2-semestre">2nd Semester</option>
-                </select>
+                <select id="contrib-sem"></select>
               </div>
             </div>
 
@@ -451,29 +851,30 @@ function initContributeModal() {
     `;
     document.body.appendChild(modal);
 
-    const ucMapping = {
-      "1-semestre": [
-        { code: "aac", name: "AAC — Advanced Computer Architectures" },
-        { code: "cpar", name: "CPAR — Parallel Computing" },
-        { code: "fced", name: "FCED — High-Performance Computing Tools" },
-        { code: "sac", name: "SAC — Computer Systems and Architectures" },
-        { code: "sne", name: "SNE — Numerical Simulation in Engineering" },
-        { code: "vc", name: "VC — Scientific Visualization" },
-      ],
-      "2-semestre": [
-        { code: "aded", name: "ADED — High-Performance Data Analysis" },
-        { code: "ap", name: "AP — Parallel Algorithms" },
-        { code: "chle", name: "CHLE — Large-Scale Hybrid Computing" },
-        { code: "pced", name: "PCED — High-Performance Computing Project" },
-        { code: "sade", name: "SADE — Efficient Data Storage Systems" },
-      ],
-    };
+    function updateSemesterDropdown() {
+      const year = document.getElementById("contrib-year").value;
+      const semSelect = document.getElementById("contrib-sem");
+      if (year === "2-ano") {
+        semSelect.innerHTML = `
+          <option value="1-semestre">1st Sem (Specialization &amp; Options)</option>
+          <option value="2-semestre">2nd Sem (Dissertation Defense)</option>
+        `;
+      } else {
+        semSelect.innerHTML = `
+          <option value="1-semestre">1st Semester</option>
+          <option value="2-semestre">2nd Semester</option>
+        `;
+      }
+      updateUcDropdown();
+    }
 
     function updateUcDropdown() {
+      const year = document.getElementById("contrib-year").value;
       const sem = document.getElementById("contrib-sem").value;
       const ucSelect = document.getElementById("contrib-uc");
-      const ucs = ucMapping[sem] || ucMapping["1-semestre"];
-      ucSelect.innerHTML = ucs.map(u => `<option value="${u.code}">${u.name}</option>`).join("");
+      const yearMapping = UC_MAPPING[year] || UC_MAPPING["1-ano"];
+      const ucs = yearMapping[sem] || yearMapping["1-semestre"];
+      ucSelect.innerHTML = ucs.map(u => `<option value="${u.code}">${escapeHtml(u.name)}</option>`).join("");
       updateUploadLink();
     }
 
@@ -493,12 +894,16 @@ function initContributeModal() {
       }
     }
 
-    document.getElementById("contrib-sem").addEventListener("change", updateUcDropdown);
-    document.getElementById("contrib-year").addEventListener("change", updateUploadLink);
+    document.getElementById("contrib-year").addEventListener("change", () => {
+      updateSemesterDropdown();
+    });
+    document.getElementById("contrib-sem").addEventListener("change", () => {
+      updateUcDropdown();
+    });
     document.getElementById("contrib-uc").addEventListener("change", updateUploadLink);
     document.getElementById("contrib-cat").addEventListener("change", updateUploadLink);
 
-    updateUcDropdown();
+    updateSemesterDropdown();
 
     const tabFileBtn = document.getElementById("tab-btn-file");
     const tabDateBtn = document.getElementById("tab-btn-date");
@@ -549,22 +954,53 @@ function initContributeModal() {
     typeSelect.addEventListener("change", updateDateIssueLink);
   }
 
-  document.querySelectorAll("[data-open-contribute]").forEach(btn => {
+  // Global trigger for [data-open-contribute]
+  document.querySelectorAll("[data-open-contribute]").forEach((btn) => {
     btn.addEventListener("click", () => {
-      const modal = document.getElementById("contribute-modal");
-      if (modal) {
-        modal.style.display = "flex";
-        const targetTab = btn.getAttribute("data-open-contribute");
-        if (targetTab === "date") {
-          const tabDateBtn = document.getElementById("tab-btn-date");
-          if (tabDateBtn) tabDateBtn.click();
-        } else {
-          const tabFileBtn = document.getElementById("tab-btn-file");
-          if (tabFileBtn) tabFileBtn.click();
-        }
-      }
+      openContributeModalWithPrefill({
+        tab: btn.getAttribute("data-open-contribute"),
+        year: btn.getAttribute("data-prefill-year"),
+        sem: btn.getAttribute("data-prefill-sem"),
+        uc: btn.getAttribute("data-prefill-uc"),
+      });
     });
   });
+}
+
+function openContributeModalWithPrefill(opts = {}) {
+  const modal = document.getElementById("contribute-modal");
+  if (!modal) return;
+  modal.style.display = "flex";
+
+  const targetTab = opts.tab || "file";
+  if (targetTab === "date") {
+    const tabDateBtn = document.getElementById("tab-btn-date");
+    if (tabDateBtn) tabDateBtn.click();
+  } else {
+    const tabFileBtn = document.getElementById("tab-btn-file");
+    if (tabFileBtn) tabFileBtn.click();
+
+    const yearSelect = document.getElementById("contrib-year");
+    const semSelect = document.getElementById("contrib-sem");
+    const ucSelect = document.getElementById("contrib-uc");
+
+    if (opts.year && yearSelect) {
+      yearSelect.value = opts.year;
+      // Trigger change event to re-populate semesters
+      yearSelect.dispatchEvent(new Event("change"));
+    }
+
+    if (opts.sem && semSelect) {
+      semSelect.value = opts.sem;
+      // Trigger change event to re-populate UCs
+      semSelect.dispatchEvent(new Event("change"));
+    }
+
+    if (opts.uc && ucSelect) {
+      ucSelect.value = opts.uc;
+      ucSelect.dispatchEvent(new Event("change"));
+    }
+  }
 }
 
 // ---------------------------------------------------------------------
@@ -580,4 +1016,5 @@ document.addEventListener("DOMContentLoaded", () => {
   renderCalendarEmbed();
   initScheduleLinks();
   initContributeModal();
+  initPreviewModal();
 });
