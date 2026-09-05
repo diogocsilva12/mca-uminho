@@ -917,11 +917,10 @@ function initContributeModal() {
     const sem = semSelect.value;
     const uc = ucSelect.value;
     const cat = catSelect.value;
-    const path = `files/${year}/${sem}/${uc}/${cat}/`;
-
-    if (pathEl) pathEl.textContent = path;
+    const cleanPath = `files/${year}/${sem}/${uc}/${cat}`;
+    if (pathEl) pathEl.textContent = `${cleanPath}/`;
     if (uploadBtn) {
-      uploadBtn.href = `https://github.com/${repoOwner}/${repoName}/upload/main/${path}`;
+      uploadBtn.href = `https://github.com/${repoOwner}/${repoName}/upload/main/${cleanPath}`;
     }
   }
 
