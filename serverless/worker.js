@@ -55,11 +55,30 @@ export default {
       });
     }
 
-    const token = env.GITHUB_TOKEN;
+    // Robust token lookup (supports exact, trimmed, case-insensitive, or global bindings)
+    let token = null;
+    if (env && typeof env === "object") {
+      if (env.GITHUB_TOKEN) token = env.GITHUB_TOKEN;
+      if (!token) {
+        for (const [k, v] of Object.entries(env)) {
+          const normalized = k.trim().toLowerCase().replace(/[-_]/g, "");
+          if (normalized === "githubtoken" || normalized === "githubpat" || normalized === "ghp") {
+            token = v;
+            break;
+          }
+        }
+      }
+    }
+    if (!token && typeof GITHUB_TOKEN !== "undefined") {
+      token = GITHUB_TOKEN;
+    }
+
     if (!token) {
+      const boundKeys = env && typeof env === "object" ? Object.keys(env) : [];
+      const keysInfo = boundKeys.length ? `[${boundKeys.map((k) => `"${k}"`).join(", ")}]` : "(none detected)";
       return new Response(
         JSON.stringify({
-          error: "Worker GITHUB_TOKEN secret is not configured in Cloudflare environment variables.",
+          error: `Worker GITHUB_TOKEN secret is not detected. Bound environment keys: ${keysInfo}. Please check that the secret is named GITHUB_TOKEN and that you clicked "Deploy" after adding it in Cloudflare Settings -> Variables.`,
         }),
         { status: 500, headers: { ...CORS_HEADERS, "Content-Type": "application/json" } }
       );
