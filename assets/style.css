@@ -786,16 +786,39 @@ footer.site-footer a {
   border: 1px solid var(--line);
 }
 
-.date-row .date-tag-semestre {
+.date-row .date-tag-semestre,
+.date-row .date-tag-semester {
   color: #0b57d0;
   border-color: rgba(11, 87, 208, 0.25);
   background: rgba(11, 87, 208, 0.04);
 }
 
-.date-row .date-tag-exames {
+.date-row .date-tag-exames,
+.date-row .date-tag-exams {
   color: #b3261e;
   border-color: rgba(179, 38, 30, 0.25);
   background: rgba(179, 38, 30, 0.04);
+}
+
+.date-row .date-tag-pausa,
+.date-row .date-tag-break {
+  color: #805b00;
+  border-color: rgba(128, 91, 0, 0.25);
+  background: rgba(128, 91, 0, 0.04);
+}
+
+.date-row .date-tag-entrega,
+.date-row .date-tag-deadline {
+  color: #1b873f;
+  border-color: rgba(27, 135, 63, 0.25);
+  background: rgba(27, 135, 63, 0.04);
+}
+
+.date-row .date-tag-apresentacao,
+.date-row .date-tag-presentation {
+  color: #6a1b9a;
+  border-color: rgba(106, 27, 154, 0.25);
+  background: rgba(106, 27, 154, 0.04);
 }
 
 .embed-card {

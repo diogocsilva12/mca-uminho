@@ -1,20 +1,20 @@
-## Descrição da Contribuição
+## Contribution Description
 
-Por favor, descreve resumidamente as alterações propostas nesta submissão.
+Please provide a concise description of the changes proposed in this Pull Request.
 
-### Tipo de Contribuição
-- [ ] Novo material de estudo (slides, guiões, exercícios, livros)
-- [ ] Nova entrada de calendário (exame, teste, apresentação, prazo)
-- [ ] Correção de ficheiro existente ou link
-- [ ] Melhoria visual ou funcional no site
+### Contribution Type
+- [ ] New study material (slides, lab guides, problem sets, books)
+- [ ] New calendar entry (exam, test, presentation, deadline)
+- [ ] Fix or update for existing file or link
+- [ ] Visual or functional improvement to the website
 
-### Unidade Curricular / Ano
-- **Ano**: 1º Ano / 2º Ano
-- **Semestre**: 1º Semestre / 2º Semestre
-- **UC**: (ex: AAC, CPAR, FCED, SAC, SNE, VC, ADED, AP, CHLE, PCED, SADE)
+### Course Unit / Year
+- **Year**: 1st Year / 2nd Year
+- **Semester**: 1st Semester / 2nd Semester
+- **Course**: (e.g. AAC, CPAR, FCED, SAC, SNE, VC, ADED, AP, CHLE, PCED, SADE)
 
-### Verificações de Qualidade e Privacidade
-- [ ] O ficheiro foi colocado na pasta correta (`files/<ano>/<semestre>/<uc>/<categoria>`)
-- [ ] O ficheiro **NÃO CONTÉM** pautas com notas individuais de alunos ou dados pessoais protegidos por RGPD
-- [ ] A entrada foi devidamente registada ou atualizada em `assets/data/site-data.js`
-- [ ] Confirmo que este PR aguarda revisão e aprovação pelo administrador (@diogocsilva12)
+### Quality & Privacy Checklist
+- [ ] The file has been placed in the appropriate folder (`files/<year>/<semester>/<course>/<category>/`)
+- [ ] The file **DOES NOT CONTAIN** individual student grades, pautas, or private student data (GDPR compliant)
+- [ ] The file or date is properly registered and updated in `assets/data/site-data.js`
+- [ ] I acknowledge that this PR requires review and approval by the code owner (@diogocsilva12)

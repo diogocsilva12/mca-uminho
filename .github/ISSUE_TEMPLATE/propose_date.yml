@@ -1,0 +1,40 @@
+name: Propose Calendar Date / Schedule Entry
+description: Suggest adding an exam date, test, presentation, or project deadline
+title: "[Date] "
+labels: ["calendar", "awaiting-review"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this form to suggest new dates for exams, project presentations, or deadlines.
+        Your proposal will be reviewed and integrated by @diogocsilva12.
+  - type: input
+    id: date
+    attributes:
+      label: Event Date (YYYY-MM-DD)
+      placeholder: "e.g. 2027-01-15"
+    validations:
+      required: true
+  - type: input
+    id: title
+    attributes:
+      label: Event Description
+      placeholder: "e.g. Final Project Presentation (AAC) or Normal Exam (CPAR)"
+    validations:
+      required: true
+  - type: dropdown
+    id: type
+    attributes:
+      label: Event Type
+      options:
+        - Exam (Normal or Resit period)
+        - Presentation / Defense
+        - Assignment / Project Deadline
+        - Semester Milestone / Class Schedule
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Additional Notes / Official Source
+      placeholder: "e.g. Announcement link or professor message confirming the date"

@@ -1,52 +1,56 @@
-# MCA site
+# MCA Portal
 
-Site estático para partilha de materiais de estudo, calendário académico e horário de aulas do **Mestrado em Computação Avançada (MCA)** da **Universidade do Minho**. Plain HTML/CSS/JS — sem dependências nem etapas de compilação.
+Static website for sharing study materials, academic calendar, and class timetables for the **Master in Advanced Computing (MCA)** at **Universidade do Minho**. Plain HTML/CSS/JS — zero build step, zero dependencies.
 
 ```
-index.html              Página de materiais de estudo (pesquisa + navegação por ano e semestre)
-calendar.html            Calendário académico e instruções de subscrição de calendário
-schedule.html            Página de horário de aulas (ferramenta externa por João Alves)
-assets/favicon.svg      Ícone do site (SVG)
-assets/style.css         Estilos CSS partilhados (suporte a modo claro/escuro)
-assets/main.js           Interatividade, pesquisa em tempo real e renderização
-assets/data/site-data.js Base de dados dos ficheiros e datas do calendário
-files/                   Estrutura organizada de materiais de estudo
+index.html              Study materials page (live search + year and semester navigation)
+calendar.html           Academic calendar page & schedule subscription guide
+schedule.html           Class timetable page (external tool by João Alves)
+assets/favicon.svg      Site icon (SVG)
+assets/style.css        Shared stylesheet (light & dark mode support)
+assets/main.js          Interactivity, live search, and dynamic rendering
+assets/data/site-data.js Database of files, course units, and calendar dates
+files/                  Organized repository of study materials
 ```
 
-## Estrutura de Ficheiros (`files/`)
+## Repository File Structure (`files/`)
 
-Todos os materiais partilhados encontram-se organizados por ano curricular e semestre:
+All study materials are categorized by curricular year and semester:
 
 ```
 files/
 └── 1-ano/
     ├── 1-semestre/
-    │   ├── aac/   — Arquiteturas Avançadas de Computadores
-    │   ├── cpar/  — Computação Paralela
-    │   ├── fced/  — Ferramentas de Computação de Elevado Desempenho
-    │   ├── sac/   — Sistemas e Arquiteturas de Computadores
-    │   ├── sne/   — Simulação Numérica em Engenharia
-    │   └── vc/    — Visualização Científica
+    │   ├── aac/   — Advanced Computer Architectures
+    │   ├── cpar/  — Parallel Computing
+    │   ├── fced/  — High-Performance Computing Tools
+    │   ├── sac/   — Computer Systems and Architectures
+    │   ├── sne/   — Numerical Simulation in Engineering
+    │   └── vc/    — Scientific Visualization
     └── 2-semestre/
-        ├── aded/  — Análise de Dados de Elevado Desempenho
-        ├── ap/    — Algoritmos Paralelos
-        ├── chle/  — Computação Híbrida de Larga Escala
-        ├── pced/  — Projeto em Computação de Elevado Desempenho
-        └── sade/  — Sistemas de Armazenamento de Dados Eficientes
+        ├── aded/  — High-Performance Data Analysis
+        ├── ap/    — Parallel Algorithms
+        ├── chle/  — Large-Scale Hybrid Computing
+        ├── pced/  — High-Performance Computing Project
+        └── sade/  — Efficient Data Storage Systems
 ```
 
-Dentro de cada unidade curricular os ficheiros estão categorizados por `teoricas/`, `praticas/`, `trabalho/`, `exames/` e `books/`.
+Inside each course unit, files are organized into `teoricas/` (lectures), `praticas/` (labs), `trabalho/` (assignments), `exames/` (exams), and `books/`.
 
-## Ferramenta de Horários e Créditos
+## Class Timetable Tool & Credits
 
-Um agradecimento especial e reconhecimento ao **João Alves** pelo desenvolvimento da ferramenta de horários e subscrição de calendário do MCA:
-- Ferramenta: [mca.jalves.dev/calendar](https://mca.jalves.dev/calendar)
+Special thanks and recognition to **João Alves** for creating and maintaining the MCA schedule and calendar subscription tool:
+- Tool: [mca.jalves.dev/calendar](https://mca.jalves.dev/calendar)
 - GitHub: [github.com/joaoalves03](https://github.com/joaoalves03)
 
-## Publicação no GitHub Pages
+## Contributing
 
-1. No repositório, acede a **Settings → Pages**.
-2. Sob "Build and deployment", seleciona **Source** como "Deploy from a branch".
-3. Escolhe a branch `main` e a pasta `/ (root)`, e clica em **Save**.
-4. O GitHub Pages disponibiliza o site no URL `https://<username>.github.io/<repo>/`.
+Direct commits to `main` are restricted. All additions and changes must be submitted via a **Pull Request** and require code owner review (@diogocsilva12).
+See [CONTRIBUTING.md](CONTRIBUTING.md) for full guidelines and privacy (GDPR) requirements.
 
+## Deployment to GitHub Pages
+
+1. In the repository, go to **Settings → Pages**.
+2. Under "Build and deployment", set **Source** to "Deploy from a branch".
+3. Select branch `main` and folder `/ (root)`, then click **Save**.
+4. GitHub Pages serves the site at `https://<username>.github.io/<repo>/`.

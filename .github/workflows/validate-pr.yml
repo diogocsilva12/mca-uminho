@@ -42,7 +42,7 @@ jobs:
           console.log('✅ All site-data.js file references exist on disk!');
           "
 
-      - name: Check for unauthorized student grades or personal data (RGPD)
+      - name: Check for unauthorized student grades or personal data (GDPR)
         run: |
           bad_files=$(find files -type f -iname "*pauta*" -o -iname "*grade*" -o -iname "*classificac*" | grep -v "README") || true
           if [ -n "$bad_files" ]; then

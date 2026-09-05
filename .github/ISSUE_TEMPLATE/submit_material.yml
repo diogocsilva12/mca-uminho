@@ -1,0 +1,61 @@
+name: Submit Study Material
+description: Propose the addition of new slides, lab guides, exercises, or study notes
+title: "[Material] "
+labels: ["materials", "awaiting-review"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for contributing study materials for MCA!
+        To ensure quality and structure, all proposals are reviewed and approved by @diogocsilva12.
+  - type: dropdown
+    id: year
+    attributes:
+      label: Academic Year
+      options:
+        - 1st Year
+        - 2nd Year
+    validations:
+      required: true
+  - type: dropdown
+    id: semester
+    attributes:
+      label: Semester
+      options:
+        - 1st Semester
+        - 2nd Semester
+    validations:
+      required: true
+  - type: input
+    id: course
+    attributes:
+      label: Course Unit
+      placeholder: "e.g. AAC, CPAR, FCED, SAC, SNE, VC, ADED, AP, CHLE, PCED, SADE"
+    validations:
+      required: true
+  - type: dropdown
+    id: category
+    attributes:
+      label: Material Category
+      options:
+        - Lectures (lecture slides and lecture notes)
+        - Labs (exercise sheets, lab guides, and code)
+        - Assignments (project briefs, guidelines, paper templates)
+        - Exams (past tests, model exams, questions)
+        - Books & References
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: Material Description / Upload Attachment
+      placeholder: Describe what you are submitting and attach the files or download link (drag & drop files here).
+    validations:
+      required: true
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: Privacy Confirmation (GDPR)
+      options:
+        - label: I confirm this material DOES NOT contain student grades, pautas, or personal data.
+          required: true

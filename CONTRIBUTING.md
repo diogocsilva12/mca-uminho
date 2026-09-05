@@ -1,25 +1,25 @@
-# Guia de Contribuição — MCA UMinho
+# Contribution Guidelines — MCA UMinho
 
-Para manter o repositório fidedigno, organizado e respeitar a privacidade de todos os estudantes, aplicam-se as seguintes regras de contribuição:
+To ensure that the repository remains reliable, well-organized, and compliant with student privacy, the following contribution rules apply:
 
-## Regras do Repositório
+## Repository Rules
 
-1. **Sem commits diretos na branch `main`**:
-   - A branch `main` encontra-se protegida. Todos os novos conteúdos e alterações devem ser submetidos através de uma branch separada (ex: `feature/novo-material`, `update/exames`).
-   
-2. **Submissão obrigatória via Pull Request**:
-   - Cria uma nova branch a partir de `main`, adiciona as alterações e abre um **Pull Request (PR)**.
-   - O PR aciona automaticamente validações de sintaxe e verificação de ficheiros.
+1. **No direct commits to `main` branch**:
+   - The `main` branch is protected. All new content, fixes, and additions must be submitted from a separate branch (e.g., `feature/new-material`, `update/exam-dates`).
 
-3. **Revisão e Aprovação Obrigatória**:
-   - Todos os Pull Requests necessitam obrigatoriamente de **pelo menos 1 revisão e aprovação** do administrador e Code Owner (**@diogocsilva12**) antes de poderem ser integrados na branch `main`.
+2. **Mandatory Pull Requests**:
+   - Create a feature branch branching off `main`, add your changes, and open a **Pull Request (PR)**.
+   - PRs automatically trigger CI workflows to validate file paths, syntax, and verify the absence of confidential data.
 
-4. **Privacidade e Proteção de Dados (RGPD)**:
-   - É terminantemente proibido submeter pautas de notas individuais, listas com números mecanográficos/nomes de alunos ou resultados de avaliação privada.
-   - Apenas são aceites enunciados de exames/trabalhos, guiões de laboratório, slides de aulas teóricas e apontamentos públicos.
+3. **Review and Approval Required**:
+   - All Pull Requests require **at least 1 approving review** from the administrator and Code Owner (**@diogocsilva12**) before they can be merged into `main`.
 
-5. **Organização das Pastas**:
-   - Os ficheiros devem ser colocados estritamente na hierarquia correta:
-     `files/<ano>/<semestre>/<sigla-uc>/<categoria>/`
-     (Categorias: `teoricas/`, `praticas/`, `trabalho/`, `exames/`, `books/`).
-   - Registar as novas entradas em `assets/data/site-data.js`.
+4. **Privacy & Data Protection (GDPR)**:
+   - Strictly no individual student grades, pautas, student numbers/names, or private evaluation results may be uploaded.
+   - Only general course materials are allowed: assignment briefs, exam problem sets, lecture slides, lab guides, and public study notes.
+
+5. **Directory Organization**:
+   - Files must be placed strictly within the proper directory hierarchy:
+     `files/<year>/<semester>/<subject-code>/<category>/`
+     (Categories: `teoricas/`, `praticas/`, `trabalho/`, `exames/`, `books/`).
+   - Register new files in `assets/data/site-data.js` so they display on the website.
