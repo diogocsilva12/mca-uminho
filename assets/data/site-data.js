@@ -2264,6 +2264,6 @@ const SITE_DATA = {
     "repoOwner": "diogocsilva12",
     "repoName": "mca-uminho",
     "baseBranch": "main",
-    "submissionApiUrl": ""
+    "submissionApiUrl": "https://mca-contributions.diogo-coelho-silva.workers.dev"
   }
 };
