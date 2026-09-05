@@ -1,63 +1,34 @@
 const fs = require('fs');
 const path = require('path');
-const https = require('https');
-const http = require('http');
+const { execSync } = require('child_process');
 
 const REPO_ROOT = path.resolve(__dirname, '..');
 const FILES_DIR = path.join(REPO_ROOT, 'files');
 const SITE_DATA_PATH = path.join(REPO_ROOT, 'assets', 'data', 'site-data.js');
 
-// Download a file following redirects
-function downloadFile(url, destPath, token) {
-  return new Promise((resolve, reject) => {
-    const options = {
-      headers: {
-        'User-Agent': 'MCA-Issue-To-PR-Bot',
-      }
-    };
-    if (token) {
-      options.headers['Authorization'] = `token ${token}`;
-    }
-
-    const client = url.startsWith('https') ? https : http;
-
-    client.get(url, options, (res) => {
-      // Handle redirect
-      if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
-        return downloadFile(res.headers.location, destPath, token).then(resolve).catch(reject);
-      }
-
-      if (res.statusCode !== 200) {
-        return reject(new Error(`Failed to download ${url}: HTTP ${res.statusCode}`));
-      }
-
-      const dir = path.dirname(destPath);
-      fs.makedirsSync ? fs.makedirsSync(dir, { recursive: true }) : fs.mkdirSync(dir, { recursive: true });
-
-      const fileStream = fs.createWriteStream(destPath);
-      res.pipe(fileStream);
-      fileStream.on('finish', () => {
-        fileStream.close();
-        resolve();
-      });
-      fileStream.on('error', (err) => {
-        fs.unlink(destPath, () => {});
-        reject(err);
-      });
-    }).on('error', reject);
-  });
+// Download file using curl -L (follows redirects, handles CDN and SSL)
+function downloadFile(url, destPath) {
+  const dir = path.dirname(destPath);
+  fs.mkdirSync(dir, { recursive: true });
+  console.log(`Downloading: ${url} -> ${path.relative(REPO_ROOT, destPath)}`);
+  execSync(`curl -sL -A "Mozilla/5.0" "${url}" -o "${destPath}"`, { stdio: 'inherit' });
+  if (!fs.existsSync(destPath) || fs.statSync(destPath).size === 0) {
+    throw new Error(`Downloaded file is empty or missing: ${destPath}`);
+  }
 }
 
 // Parse GitHub Issue markdown form sections
 function parseIssueSections(body) {
   const sections = {};
   if (!body) return sections;
-  const regex = /###\s+([^\r\n]+)\r?\n\r?\n([\s\S]*?)(?=(?:\r?\n###\s+|$))/g;
-  let match;
-  while ((match = regex.exec(body)) !== null) {
-    const heading = match[1].trim();
-    const content = match[2].trim();
+  const parts = body.split(/^###\s+/m);
+  for (const part of parts) {
+    if (!part.trim()) continue;
+    const lines = part.trim().split(/\r?\n/);
+    const heading = lines[0].trim();
+    const content = lines.slice(1).join('\n').trim();
     sections[heading] = content;
+    sections[heading.toLowerCase()] = content;
   }
   return sections;
 }
@@ -67,15 +38,30 @@ function extractAttachments(markdown) {
   const attachments = [];
   if (!markdown) return attachments;
 
-  // Regex to match markdown links: [name.ext](url)
+  // 1. Match markdown links: [name.ext](url) or ![name.ext](url)
   const mdRegex = /!?\[([^\]]+)\]\((https?:\/\/[^\s\)]+)\)/g;
   let match;
   while ((match = mdRegex.exec(markdown)) !== null) {
     const name = match[1].trim();
     const url = match[2].trim();
-    // Only capture file attachments (contains dot in name or github assets URL)
     if (name.includes('.') || url.includes('user-attachments') || url.includes('/files/')) {
       attachments.push({ name, url });
+    }
+  }
+
+  // 2. Match raw URLs in case markdown brackets were omitted
+  if (attachments.length === 0) {
+    const rawUrlRegex = /(https?:\/\/(?:github\.com\/(?:[^\/\s]+\/[^\/\s]+\/files\/|user-attachments\/(?:files|assets)\/)[^\s\)]+))/g;
+    let m;
+    let count = 0;
+    while ((m = rawUrlRegex.exec(markdown)) !== null) {
+      count++;
+      const u = m[1];
+      const urlFileName = path.basename(new URL(u).pathname);
+      attachments.push({
+        name: urlFileName.includes('.') ? urlFileName : `attachment_${count}.pdf`,
+        url: u,
+      });
     }
   }
 
@@ -143,12 +129,11 @@ async function main() {
   const issueNumber = issue.number;
   const issueTitle = issue.title || '';
   const issueBody = issue.body || '';
-  const token = process.env.GITHUB_TOKEN;
 
   console.log(`Processing issue #${issueNumber}: "${issueTitle}"`);
 
   const sections = parseIssueSections(issueBody);
-  const labels = (issue.labels || []).map(l => (typeof l === 'string' ? l : l.name));
+  const labels = (issue.labels || []).map((l) => (typeof l === 'string' ? l : l.name));
 
   const isMaterial = labels.includes('materials') || issueTitle.toLowerCase().includes('[material]');
   const isDate = labels.includes('calendar') || issueTitle.toLowerCase().includes('[date]');
@@ -160,11 +145,11 @@ async function main() {
 
   if (isMaterial) {
     // 1. Study Material Submission
-    const rawYear = sections['Academic Year'] || '';
-    const rawSem = sections['Semester'] || '';
-    const rawCourse = sections['Course Unit'] || '';
-    const rawCategory = sections['Material Category'] || '';
-    const rawDescription = sections['Material Description / Upload Attachment'] || issueBody;
+    const rawYear = sections['academic year'] || sections['Academic Year'] || '';
+    const rawSem = sections['semester'] || sections['Semester'] || '';
+    const rawCourse = sections['course unit'] || sections['Course Unit'] || '';
+    const rawCategory = sections['material category'] || sections['Material Category'] || '';
+    const rawDescription = sections['material description / upload attachment'] || sections['Material Description / Upload Attachment'] || issueBody;
 
     const yearFolder = rawYear.includes('2') ? '2-ano' : '1-ano';
     const semFolder = rawSem.includes('2') ? '2-semestre' : '1-semestre';
@@ -178,34 +163,18 @@ async function main() {
     console.log(`Found ${attachments.length} attachment(s) in issue description.`);
 
     if (attachments.length === 0) {
-      console.log('No attachments found in issue. Checking for raw URLs...');
-      const urlRegex = /(https?:\/\/(?:github\.com\/(?:[^\/]+\/[^\/]+\/files\/|user-attachments\/assets\/)[^\s\)]+))/g;
-      let m;
-      let urlCount = 0;
-      while ((m = urlRegex.exec(rawDescription)) !== null) {
-        urlCount++;
-        attachments.push({
-          name: `material_attachment_${urlCount}.pdf`,
-          url: m[1]
-        });
-      }
-    }
-
-    if (attachments.length === 0) {
       console.error('No files found to download from issue description.');
-      process.exit(0); // Exit cleanly without failing the action
+      process.exit(0);
     }
 
     const downloadedFiles = [];
     for (const att of attachments) {
-      // Clean and sanitize filename
       let filename = path.basename(att.name).replace(/[^a-zA-Z0-9._-]/g, '_');
       if (!filename || filename === '.') filename = 'material.pdf';
 
       const dest = path.join(targetDir, filename);
-      console.log(`Downloading ${att.url} -> ${path.relative(REPO_ROOT, dest)}`);
       try {
-        await downloadFile(att.url, dest, token);
+        downloadFile(att.url, dest);
         downloadedFiles.push(path.relative(REPO_ROOT, dest));
         hasChanges = true;
       } catch (err) {
@@ -233,16 +202,16 @@ async function main() {
 - **Source Issue**: #${issueNumber}
 
 ### Uploaded Files:
-${downloadedFiles.map(f => `- \`${f}\``).join('\n')}
+${downloadedFiles.map((f) => `- \`${f}\``).join('\n')}
 
 Closes #${issueNumber}
 `;
 
   } else if (isDate) {
     // 2. Calendar Date Proposal
-    const dateVal = sections['Event Date (YYYY-MM-DD)'] || '';
-    const titleVal = sections['Event Description'] || '';
-    const rawType = sections['Event Type'] || '';
+    const dateVal = (sections['event date (yyyy-mm-dd)'] || sections['Event Date (YYYY-MM-DD)'] || '').trim();
+    const titleVal = (sections['event description'] || sections['Event Description'] || '').trim();
+    const rawType = sections['event type'] || sections['Event Type'] || '';
 
     let tag = 'exams';
     const lowerType = rawType.toLowerCase();
@@ -257,18 +226,34 @@ Closes #${issueNumber}
 
     console.log(`Adding calendar date: ${dateVal} - ${titleVal} [${tag}]`);
 
+    // Safely parse existing site-data.js as object
     const rawSiteData = fs.readFileSync(SITE_DATA_PATH, 'utf8');
-    const newEntry = `      { date: '${dateVal}', label: '${titleVal.replace(/'/g, "\\'")}', tag: '${tag}' },\n    ],`;
-    let updatedSiteData = rawSiteData;
+    eval(rawSiteData.replace('const SITE_DATA =', 'global.EXISTING_DATA ='));
+    const data = global.EXISTING_DATA;
 
-    if (rawSiteData.includes('    ],\n  },')) {
-      updatedSiteData = rawSiteData.replace('    ],\n  },', newEntry + '\n  },');
-      fs.writeFileSync(SITE_DATA_PATH, updatedSiteData, 'utf8');
-      hasChanges = true;
-    } else {
-      console.error('Could not find insertion point for calendar date in site-data.js');
-      process.exit(0);
+    if (!data || !data.calendar || !Array.isArray(data.calendar.dates)) {
+      console.error('Invalid site-data.js format.');
+      process.exit(1);
     }
+
+    // Add new date and sort chronologically
+    data.calendar.dates.push({
+      date: dateVal,
+      label: titleVal,
+      tag: tag,
+    });
+    data.calendar.dates.sort((a, b) => (a.date < b.date ? -1 : 1));
+
+    const updatedContent = `/**
+ * SITE CONTENT — Master in Advanced Computing (MCA) - UMinho
+ * Automatically synced study materials, academic calendar, and class schedule.
+ */
+
+const SITE_DATA = ${JSON.stringify(data, null, 2)};
+`;
+
+    fs.writeFileSync(SITE_DATA_PATH, updatedContent, 'utf8');
+    hasChanges = true;
 
     branchName = `contribute/date-issue-${issueNumber}`;
     prTitle = `[Date] ${titleVal} (${dateVal})`;
@@ -293,7 +278,6 @@ Closes #${issueNumber}
     fs.appendFileSync(process.env.GITHUB_OUTPUT, `branch_name=${branchName}\n`);
     fs.appendFileSync(process.env.GITHUB_OUTPUT, `pr_title=${prTitle.replace(/\n/g, ' ')}\n`);
 
-    // Write multiline PR body to output
     const delimiter = `DELIMITER_${Date.now()}`;
     fs.appendFileSync(process.env.GITHUB_OUTPUT, `pr_body<<${delimiter}\n${prBody}\n${delimiter}\n`);
     console.log(`Outputs set successfully for branch: ${branchName}`);

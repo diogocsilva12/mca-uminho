@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const REPO_ROOT = '/Users/diogocsilva12/Documents/GitHub/mca-uminho';
+const REPO_ROOT = path.resolve(__dirname, '..');
 const SITE_DATA_PATH = path.join(REPO_ROOT, 'assets', 'data', 'site-data.js');
 const FILES_DIR = path.join(REPO_ROOT, 'files');
 
