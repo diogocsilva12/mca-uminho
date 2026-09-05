@@ -1,0 +1,44 @@
+name: Auto-Sync Site Data
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'files/**'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'files/**'
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Sync site-data.js from files directory
+        run: node scripts/sync-site-data.js
+
+      - name: Commit and push changes if site-data.js changed
+        run: |
+          if [ -n "$(git status --porcelain assets/data/site-data.js)" ]; then
+            git config --global user.name "github-actions[bot]"
+            git config --global user.email "github-actions[bot]@users.noreply.github.com"
+            git add assets/data/site-data.js
+            git commit -m "[skip ci] Auto-sync assets/data/site-data.js with files on disk"
+            git push
+            echo "✅ Automatically updated and committed assets/data/site-data.js!"
+          else
+            echo "✅ site-data.js is already up to date."
+          fi
