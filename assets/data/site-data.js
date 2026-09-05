@@ -93,6 +93,13 @@ const SITE_DATA = {
                   "category": "Lectures"
                 },
                 {
+                  "name": "glass.xlsx",
+                  "type": "xlsx",
+                  "size": "28 KB",
+                  "url": "files/1-ano/1-semestre/aac/teoricas/glass.xlsx",
+                  "category": "Lectures"
+                },
+                {
                   "name": "Lab1___VTune__2nd_part_.pdf",
                   "type": "pdf",
                   "size": "299 KB",
