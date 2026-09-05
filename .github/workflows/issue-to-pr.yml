@@ -1,0 +1,61 @@
+name: Convert Issue to Pull Request
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  convert_issue:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Process Issue Submission
+        id: process
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node scripts/process-issue.js
+
+      - name: Create Branch and Pull Request
+        if: steps.process.outputs.has_changes == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BRANCH_NAME: ${{ steps.process.outputs.branch_name }}
+          PR_TITLE: ${{ steps.process.outputs.pr_title }}
+          PR_BODY: ${{ steps.process.outputs.pr_body }}
+          ISSUE_NUM: ${{ github.event.issue.number }}
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Create branch and commit changes
+          git checkout -b "$BRANCH_NAME"
+          git add files/ assets/data/site-data.js
+          git commit -m "$PR_TITLE"
+          git push origin "$BRANCH_NAME"
+
+          # Open Pull Request via GitHub CLI
+          PR_URL=$(gh pr create \
+            --title "$PR_TITLE" \
+            --body "$PR_BODY" \
+            --head "$BRANCH_NAME" \
+            --base "main" \
+            --reviewer "diogocsilva12")
+
+          echo "Created Pull Request: $PR_URL"
+
+          # Comment on the issue with PR link
+          gh issue comment "$ISSUE_NUM" --body "🎉 **Thank you for contributing!** An automated Pull Request has been opened with your submission: ${PR_URL}. It has been assigned to @diogocsilva12 for review and approval."

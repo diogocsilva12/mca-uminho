@@ -700,7 +700,7 @@ function initScheduleLinks() {
 }
 
 // ---------------------------------------------------------------------
-// Contribution feature & Modal (Direct Automated PR to Target Folder)
+// Contribution feature & Modal (Issue Form -> Automated Pull Request)
 // ---------------------------------------------------------------------
 
 const UC_MAPPING = {
@@ -740,6 +740,21 @@ const UC_MAPPING = {
   },
 };
 
+const CATEGORY_NAMES = {
+  teoricas: "Lectures (lecture slides and lecture notes)",
+  praticas: "Labs (exercise sheets, lab guides, and code)",
+  trabalho: "Assignments (project briefs, guidelines, paper templates)",
+  exames: "Exams (past tests, model exams, questions)",
+  books: "Books & References",
+};
+
+const EVENT_TYPE_NAMES = {
+  exams: "Exam (Normal or Resit period)",
+  presentation: "Presentation / Defense",
+  deadline: "Assignment / Project Deadline",
+  semester: "Semester Milestone / Class Schedule",
+};
+
 function initContributeModal() {
   if (document.getElementById("contribute-modal")) return;
 
@@ -762,12 +777,12 @@ function initContributeModal() {
       </div>
       <div class="modal-content">
         <div class="modal-notice">
-          <strong>Review &amp; Approval Policy:</strong>
-          All contributions go to a new branch and create a <strong>Pull Request</strong>. The repository owner (<strong>@${escapeHtml(repoOwner)}</strong>) will review and approve the PR before changes are merged into <code>main</code>.
+          <strong>Review &amp; Safety Policy:</strong>
+          All contributions go through an automated <strong>Pull Request</strong> reviewed and approved by <strong>@${escapeHtml(repoOwner)}</strong> before merging to <code>main</code>. No student grades or personal data may be uploaded (GDPR).
         </div>
 
         <div class="modal-tabs" id="contrib-tabs" role="tablist">
-          <button type="button" class="modal-tab-btn active" id="tab-btn-file" data-tab="file">Add Files (Creates PR)</button>
+          <button type="button" class="modal-tab-btn active" id="tab-btn-file" data-tab="file">Add Materials (Creates PR)</button>
           <button type="button" class="modal-tab-btn" id="tab-btn-date" data-tab="date">Propose Date (Creates PR)</button>
         </div>
 
@@ -804,8 +819,13 @@ function initContributeModal() {
             </div>
           </div>
 
+          <div class="form-group">
+            <label for="contrib-file-title">Title / Topic Description <span style="font-size:0.76rem; color:var(--ink-faint); font-weight:normal;">(optional)</span></label>
+            <input type="text" id="contrib-file-title" placeholder="e.g. Chapter 3 - Clustering Algorithms Notes">
+          </div>
+
           <div class="target-folder-box">
-            <span class="folder-label">Destination folder in repository:</span>
+            <span class="folder-label">Target directory in repository:</span>
             <code id="target-folder-path">files/1-ano/1-semestre/aac/teoricas/</code>
           </div>
 
@@ -813,14 +833,14 @@ function initContributeModal() {
             <div class="guide-step">
               <span class="guide-icon">📂</span>
               <div class="guide-text">
-                <strong>How it works:</strong> Clicking below opens GitHub's uploader directly in this target folder. Drag &amp; drop your files, then click <em>"Propose changes"</em>. GitHub automatically opens a <strong>Pull Request</strong> on a new branch for <strong>@${escapeHtml(repoOwner)}</strong> to approve!
+                <strong>How it works:</strong> Click the button below to open the form. Simply <strong>drag &amp; drop your files</strong> (PDF, code, slides, zip) into the description box! A <strong>Pull Request</strong> will be automatically created on a new branch for <strong>@${escapeHtml(repoOwner)}</strong> to approve.
               </div>
             </div>
           </div>
 
           <div class="modal-actions">
-            <a id="btn-github-upload-pr" class="btn btn-primary" href="#" target="_blank" rel="noopener">
-              Upload Files &amp; Create Pull Request ↗
+            <a id="btn-submit-material-pr" class="btn btn-primary" href="#" target="_blank" rel="noopener">
+              Upload Files &amp; Open PR ↗
             </a>
           </div>
         </div>
@@ -829,8 +849,8 @@ function initContributeModal() {
         <div id="tab-content-date" class="tab-pane" style="display:none;">
           <div class="form-row">
             <div class="form-group">
-              <label for="contrib-date-val">Event Date</label>
-              <input type="date" id="contrib-date-val">
+              <label for="contrib-date-val">Event Date *</label>
+              <input type="date" id="contrib-date-val" required>
             </div>
             <div class="form-group">
               <label for="contrib-date-type">Event Type</label>
@@ -844,30 +864,32 @@ function initContributeModal() {
           </div>
 
           <div class="form-group">
-            <label for="contrib-date-title">Event Description / Course</label>
+            <label for="contrib-date-title">Event Description / Course *</label>
             <input type="text" id="contrib-date-title" placeholder="e.g. CPAR Normal Exam or AAC WA2 Presentation">
           </div>
 
+          <div class="form-group">
+            <label for="contrib-date-notes">Notes / Source Link <span style="font-size:0.76rem; color:var(--ink-faint); font-weight:normal;">(optional)</span></label>
+            <input type="text" id="contrib-date-notes" placeholder="e.g. Pedagogical calendar or professor confirmation">
+          </div>
+
           <div class="target-folder-box">
-            <span class="folder-label">Formatted calendar entry for <code>assets/data/site-data.js</code>:</span>
-            <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:4px;">
-              <code id="date-snippet-preview">{ date: '2026-06-15', label: 'CPAR Normal Exam', tag: 'exams' },</code>
-              <button type="button" id="btn-copy-date-snippet" class="btn btn-secondary btn-sm" style="flex-shrink:0; padding:2px 8px; font-size:0.75rem;">Copy</button>
-            </div>
+            <span class="folder-label">Destination in repository:</span>
+            <code>assets/data/site-data.js &rarr; calendar.dates</code>
           </div>
 
           <div class="contrib-guide-box">
             <div class="guide-step">
               <span class="guide-icon">📅</span>
               <div class="guide-text">
-                <strong>How it works:</strong> Click the button below to edit <code>site-data.js</code> on GitHub. Paste the line into <code>calendar.dates</code> and click <em>"Propose changes"</em> to automatically create the Pull Request for <strong>@${escapeHtml(repoOwner)}</strong> to approve!
+                <strong>How it works:</strong> Click the button below to submit the event details. A <strong>Pull Request</strong> will be automatically generated to add the date to the calendar for <strong>@${escapeHtml(repoOwner)}</strong> to approve.
               </div>
             </div>
           </div>
 
           <div class="modal-actions">
-            <a id="btn-propose-date-pr" class="btn btn-primary" href="https://github.com/${escapeHtml(repoOwner)}/${escapeHtml(repoName)}/edit/main/assets/data/site-data.js" target="_blank" rel="noopener">
-              Edit site-data.js &amp; Create Pull Request ↗
+            <a id="btn-submit-date-pr" class="btn btn-primary" href="#" target="_blank" rel="noopener">
+              Propose Date &amp; Open PR ↗
             </a>
           </div>
         </div>
@@ -878,14 +900,15 @@ function initContributeModal() {
   document.body.appendChild(modal);
 
   // -------------------------------------------------------------------
-  // Dropdown synchronization & Direct Upload Path
+  // Dropdown synchronization & URL building
   // -------------------------------------------------------------------
   const yearSelect = document.getElementById("contrib-year");
   const semSelect = document.getElementById("contrib-sem");
   const ucSelect = document.getElementById("contrib-uc");
   const catSelect = document.getElementById("contrib-cat");
+  const fileTitleInput = document.getElementById("contrib-file-title");
   const pathEl = document.getElementById("target-folder-path");
-  const uploadBtn = document.getElementById("btn-github-upload-pr");
+  const submitMaterialBtn = document.getElementById("btn-submit-material-pr");
 
   function updateSemesterDropdown() {
     const year = yearSelect.value;
@@ -909,58 +932,92 @@ function initContributeModal() {
     const yearMapping = UC_MAPPING[year] || UC_MAPPING["1-ano"];
     const ucs = yearMapping[sem] || yearMapping["1-semestre"];
     ucSelect.innerHTML = ucs.map((u) => `<option value="${u.code}">${escapeHtml(u.name)}</option>`).join("");
-    updateUploadPath();
+    updateMaterialLink();
   }
 
-  function updateUploadPath() {
+  function updateMaterialLink() {
     const year = yearSelect.value;
+    const yearLabel = year === "2-ano" ? "2nd Year" : "1st Year";
     const sem = semSelect.value;
-    const uc = ucSelect.value;
+    const semLabel = sem === "2-semestre" ? "2nd Semester" : "1st Semester";
+    const ucCode = ucSelect.value ? ucSelect.value.toUpperCase() : "COURSE";
+    const ucOption = ucSelect.options[ucSelect.selectedIndex];
+    const ucName = ucOption ? ucOption.text : ucCode;
     const cat = catSelect.value;
-    const cleanPath = `files/${year}/${sem}/${uc}/${cat}`;
+    const catFullName = CATEGORY_NAMES[cat] || "Lectures (lecture slides and lecture notes)";
+
+    const cleanPath = `files/${year}/${sem}/${ucSelect.value}/${cat}`;
     if (pathEl) pathEl.textContent = `${cleanPath}/`;
-    if (uploadBtn) {
-      uploadBtn.href = `https://github.com/${repoOwner}/${repoName}/upload/main/${cleanPath}`;
+
+    const t = fileTitleInput.value.trim();
+    const issueTitle = t ? `[Material] ${ucCode} — ${t}` : `[Material] New files for ${ucCode} (${cat})`;
+
+    const description = t
+      ? `${t}\n\n**Destination directory**: \`${cleanPath}/\`\n\n*(Drag & drop your files, slides, or archives directly into this box!)*`
+      : `**Destination directory**: \`${cleanPath}/\`\n\n*(Drag & drop your files, slides, or archives directly into this box!)*`;
+
+    const params = new URLSearchParams({
+      template: "submit_material.yml",
+      title: issueTitle,
+      year: yearLabel,
+      semester: semLabel,
+      course: ucName,
+      category: catFullName,
+      description: description,
+    });
+
+    if (submitMaterialBtn) {
+      submitMaterialBtn.href = `https://github.com/${repoOwner}/${repoName}/issues/new?${params.toString()}`;
     }
   }
 
   yearSelect.addEventListener("change", updateSemesterDropdown);
   semSelect.addEventListener("change", updateUcDropdown);
-  ucSelect.addEventListener("change", updateUploadPath);
-  catSelect.addEventListener("change", updateUploadPath);
+  ucSelect.addEventListener("change", updateMaterialLink);
+  catSelect.addEventListener("change", updateMaterialLink);
+  fileTitleInput.addEventListener("input", updateMaterialLink);
 
   updateSemesterDropdown();
 
   // -------------------------------------------------------------------
-  // Date Snippet Synchronization & Copy
+  // Date Form Synchronization & URL building
   // -------------------------------------------------------------------
   const dateValInput = document.getElementById("contrib-date-val");
   const dateTitleInput = document.getElementById("contrib-date-title");
   const dateTypeSelect = document.getElementById("contrib-date-type");
-  const snippetEl = document.getElementById("date-snippet-preview");
-  const copySnippetBtn = document.getElementById("btn-copy-date-snippet");
+  const dateNotesInput = document.getElementById("contrib-date-notes");
+  const submitDateBtn = document.getElementById("btn-submit-date-pr");
 
-  function updateDateSnippet() {
-    const d = dateValInput.value || "2026-06-15";
-    const t = dateTitleInput.value.trim() || "Normal Exam";
-    const type = dateTypeSelect.value || "exams";
-    const snippet = `{ date: '${d}', label: '${t.replace(/'/g, "\\'")}', tag: '${type}' },`;
-    if (snippetEl) snippetEl.textContent = snippet;
+  function updateDateLink() {
+    const d = dateValInput.value.trim();
+    const t = dateTitleInput.value.trim();
+    const typeKey = dateTypeSelect.value;
+    const typeFullName = EVENT_TYPE_NAMES[typeKey] || "Exam (Normal or Resit period)";
+    const notes = dateNotesInput.value.trim();
+
+    const titleParam = t
+      ? (d ? `[Date] ${t} (${d})` : `[Date] ${t}`)
+      : `[Date] New Calendar Date Proposal`;
+
+    const params = new URLSearchParams({
+      template: "propose_date.yml",
+      title: titleParam,
+      date: d,
+      type: typeFullName,
+      notes: notes,
+    });
+
+    if (submitDateBtn) {
+      submitDateBtn.href = `https://github.com/${repoOwner}/${repoName}/issues/new?${params.toString()}`;
+    }
   }
 
-  dateValInput.addEventListener("input", updateDateSnippet);
-  dateTitleInput.addEventListener("input", updateDateSnippet);
-  dateTypeSelect.addEventListener("change", updateDateSnippet);
+  dateValInput.addEventListener("input", updateDateLink);
+  dateTitleInput.addEventListener("input", updateDateLink);
+  dateTypeSelect.addEventListener("change", updateDateLink);
+  dateNotesInput.addEventListener("input", updateDateLink);
 
-  copySnippetBtn.addEventListener("click", () => {
-    const text = snippetEl.textContent;
-    navigator.clipboard.writeText(text).then(() => {
-      copySnippetBtn.textContent = "Copied!";
-      setTimeout(() => { copySnippetBtn.textContent = "Copy"; }, 2000);
-    });
-  });
-
-  updateDateSnippet();
+  updateDateLink();
 
   // -------------------------------------------------------------------
   // Modal Tabs
