@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Schedule · MCA</title>
+<meta name="description" content="Class schedule and calendar subscription tool for the MCA programme at Universidade do Minho.">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="index.html">
+      <span class="brand-mark">MCA</span>
+      <span class="brand-name">Universidade do Minho</span>
+    </a>
+    <nav aria-label="Primary">
+      <ul class="nav-links">
+        <li><a href="index.html">Files</a></li>
+        <li><a href="calendar.html">Calendar</a></li>
+        <li><a href="schedule.html">Schedule</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <div class="page-head">
+    <h1>Class schedule</h1>
+    <p>Pick your year and electives to build a live timetable, then subscribe so it stays in sync in your own calendar app.</p>
+  </div>
+
+  <div class="schedule-cta">
+    <a class="btn btn-primary" data-schedule-url href="https://mca.jalves.dev/calendar" target="_blank" rel="noopener">
+      Open the schedule tool ↗
+    </a>
+    <span class="frame-note">Opens <span class="mono" data-schedule-url-label></span> in a new tab.</span>
+  </div>
+
+  <div class="device-frame">
+    <div class="device-frame-bar">
+      <span></span><span></span><span></span>
+      <span class="device-frame-url mono" data-schedule-url-label></span>
+    </div>
+    <iframe data-schedule-url loading="lazy" title="MCA class schedule tool"></iframe>
+  </div>
+  <p class="frame-note">If the tool doesn't load above, use the button at the top to open it directly — some browsers block embedded pages.</p>
+
+  <hr class="section-divider">
+
+  <h2>Subscribing to the calendar</h2>
+  <ol class="steps-list">
+    <li><strong>Open the tool</strong> and select your year and elective courses (Opção I–IV) so the schedule matches what you're actually taking.</li>
+    <li><strong>Copy the calendar URL</strong> it generates — this is a live feed, not a one-off download.</li>
+    <li><strong>Add it to your calendar app</strong> as a "subscription" or "from URL" calendar (Google Calendar, Apple Calendar and Outlook all support this) so future changes show up automatically.</li>
+  </ol>
+</main>
+
+<footer class="site-footer">
+  <span>MCA · Universidade do Minho</span>
+  <span>Schedule tool built and maintained independently — <a href="https://mca.jalves.dev/calendar" target="_blank" rel="noopener">mca.jalves.dev</a>.</span>
+</footer>
+
+<script src="assets/data/site-data.js"></script>
+<script src="assets/main.js"></script>
+</body>
+</html>

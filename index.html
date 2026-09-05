@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Files · MCA</title>
+<meta name="description" content="Shared study materials for the MCA programme at Universidade do Minho.">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="index.html">
+      <span class="brand-mark">MCA</span>
+      <span class="brand-name">Universidade do Minho</span>
+    </a>
+    <nav aria-label="Primary">
+      <ul class="nav-links">
+        <li><a href="index.html">Files</a></li>
+        <li><a href="calendar.html">Calendar</a></li>
+        <li><a href="schedule.html">Schedule</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <div class="page-head">
+    <div class="page-head-row">
+      <div>
+        <h1>Study materials</h1>
+        <p>Notes, slides and exercises passed down by MCA students, for the ones coming after them.</p>
+      </div>
+      <div class="year-switch" data-year-switch role="group" aria-label="Select year">
+        <button type="button" data-year="1" aria-pressed="true">1st year</button>
+        <button type="button" data-year="2" aria-pressed="false">2nd year</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="files-root"></div>
+</main>
+
+<footer class="site-footer">
+  <span>MCA · Universidade do Minho</span>
+  <span>Missing something? Open a pull request on the repository.</span>
+</footer>
+
+<script src="assets/data/site-data.js"></script>
+<script src="assets/main.js"></script>
+</body>
+</html>

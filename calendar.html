@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Calendar · MCA</title>
+<meta name="description" content="Key academic dates for the MCA programme at Universidade do Minho.">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="index.html">
+      <span class="brand-mark">MCA</span>
+      <span class="brand-name">Universidade do Minho</span>
+    </a>
+    <nav aria-label="Primary">
+      <ul class="nav-links">
+        <li><a href="index.html">Files</a></li>
+        <li><a href="calendar.html">Calendar</a></li>
+        <li><a href="schedule.html">Schedule</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <div class="page-head">
+    <h1>Academic calendar</h1>
+    <p>Semester dates, exam periods and other key deadlines for the MCA programme this academic year.</p>
+  </div>
+
+  <div class="layout-split">
+    <div>
+      <div class="date-list" id="date-list-root" aria-label="Key dates"></div>
+    </div>
+
+    <aside class="embed-card">
+      <h2>Add it to your calendar</h2>
+      <p>Subscribe to keep these dates synced automatically in Google Calendar, Apple Calendar or Outlook.</p>
+      <div class="embed-slot" id="calendar-embed-slot"></div>
+    </aside>
+  </div>
+</main>
+
+<footer class="site-footer">
+  <span>MCA · Universidade do Minho</span>
+  <span>Dates change — always double-check anything time-critical against the official school calendar.</span>
+</footer>
+
+<script src="assets/data/site-data.js"></script>
+<script src="assets/main.js"></script>
+</body>
+</html>
