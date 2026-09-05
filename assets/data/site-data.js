@@ -583,10 +583,10 @@ const SITE_DATA = {
                   "category": "Lectures"
                 },
                 {
-                  "name": "Apresentação.pdf",
+                  "name": "Apresentação.pdf",
                   "type": "pdf",
                   "size": "59 KB",
-                  "url": "files/1-ano/1-semestre/fced/teoricas/Apresentação.pdf",
+                  "url": "files/1-ano/1-semestre/fced/teoricas/Apresentação.pdf",
                   "category": "Lectures"
                 },
                 {
@@ -1134,7 +1134,15 @@ const SITE_DATA = {
               "code": "DCCT",
               "name": "Data Classification & Clustering",
               "description": "Option I (alternative to SAC). Supervised & unsupervised learning, classification algorithms, cluster analysis.",
-              "files": []
+              "files": [
+                {
+                  "name": "WA2.html",
+                  "type": "html",
+                  "size": "3.4 MB",
+                  "url": "files/1-ano/1-semestre/dcct/trabalho/WA2.html",
+                  "category": "Assignments"
+                }
+              ]
             },
             {
               "code": "SNE",
@@ -1170,17 +1178,17 @@ const SITE_DATA = {
                   "category": "Lectures"
                 },
                 {
-                  "name": "métodos discretização slides ODE CFronteira.pdf",
+                  "name": "métodos discretização slides ODE CFronteira.pdf",
                   "type": "pdf",
                   "size": "1.1 MB",
-                  "url": "files/1-ano/1-semestre/sne/teoricas/métodos discretização slides ODE CFronteira.pdf",
+                  "url": "files/1-ano/1-semestre/sne/teoricas/métodos discretização slides ODE CFronteira.pdf",
                   "category": "Lectures"
                 },
                 {
-                  "name": "métodos discretização slides ODE CI.pdf",
+                  "name": "métodos discretização slides ODE CI.pdf",
                   "type": "pdf",
                   "size": "1.3 MB",
-                  "url": "files/1-ano/1-semestre/sne/teoricas/métodos discretização slides ODE CI.pdf",
+                  "url": "files/1-ano/1-semestre/sne/teoricas/métodos discretização slides ODE CI.pdf",
                   "category": "Lectures"
                 },
                 {
@@ -1191,10 +1199,10 @@ const SITE_DATA = {
                   "category": "Labs"
                 },
                 {
-                  "name": "Enunciado Trab MetDiscretizaçao MCA 2025_2026.pdf",
+                  "name": "Enunciado Trab MetDiscretizaçao MCA 2025_2026.pdf",
                   "type": "pdf",
                   "size": "111 KB",
-                  "url": "files/1-ano/1-semestre/sne/praticas/Enunciado Trab MetDiscretizaçao MCA 2025_2026.pdf",
+                  "url": "files/1-ano/1-semestre/sne/praticas/Enunciado Trab MetDiscretizaçao MCA 2025_2026.pdf",
                   "category": "Labs"
                 },
                 {
