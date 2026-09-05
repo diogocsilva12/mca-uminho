@@ -16,6 +16,12 @@ jobs:
         with:
           node-version: 20
 
+      - name: Validate JavaScript syntax
+        run: |
+          node -c assets/main.js
+          node -c assets/data/site-data.js
+          echo "✅ JavaScript syntax check passed!"
+
       - name: Validate site-data.js syntax and file references
         run: |
           node -e "

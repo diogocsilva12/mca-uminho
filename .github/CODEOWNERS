@@ -1,3 +1,6 @@
-# Global Code Owners
-# All modifications require review and approval from @diogocsilva12
+# MCA UMinho Repository Code Owners
+# Each pull request will automatically request a review from @diogocsilva12.
+# When "Require review from Code Owners" branch protection is enabled on main,
+# only @diogocsilva12 can approve and merge PRs.
+
 * @diogocsilva12

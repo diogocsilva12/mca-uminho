@@ -2233,4 +2233,17 @@ const SITE_DATA = {
       github: 'https://github.com/joaoalves03',
     },
   },
+
+  /**
+   * REPOSITORY & AUTOMATED PR CONFIGURATION
+   */
+  config: {
+    repoOwner: 'diogocsilva12',
+    repoName: 'mca-uminho',
+    baseBranch: 'main',
+    // Set to your Cloudflare Worker URL when deployed (see serverless/worker.js):
+    submissionApiUrl: '',
+    // Optional fallback GitHub token (can also be saved in localStorage):
+    githubToken: '',
+  },
 };
