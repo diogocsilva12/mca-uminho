@@ -156,10 +156,10 @@ const SITE_DATA = {
                   "category": "Assignments"
                 },
                 {
-                  "name": "Concurrency and Computation - 2021 - Nguyen - FPGA‐based HPC accelerators An evaluation on performance and energy.pdf",
+                  "name": "Concurrency and Computation - 2021 - Nguyen - FPGAâbased HPC accelerators An evaluation on performance and energy.pdf",
                   "type": "pdf",
                   "size": "4.3 MB",
-                  "url": "files/1-ano/1-semestre/aac/work_assignment_1/Concurrency and Computation - 2021 - Nguyen - FPGA‐based HPC accelerators An evaluation on performance and energy.pdf",
+                  "url": "files/1-ano/1-semestre/aac/work_assignment_1/Concurrency and Computation - 2021 - Nguyen - FPGAâbased HPC accelerators An evaluation on performance and energy.pdf",
                   "category": "Assignments"
                 },
                 {
@@ -506,10 +506,10 @@ const SITE_DATA = {
                   "category": "Exams"
                 },
                 {
-                  "name": "Teste_CP_exemplo_resolução.pdf",
+                  "name": "Teste_CP_exemplo_resoluÃ§Ã£o.pdf",
                   "type": "pdf",
                   "size": "152 KB",
-                  "url": "files/1-ano/1-semestre/cpar/exames/Teste_CP_exemplo_resolução.pdf",
+                  "url": "files/1-ano/1-semestre/cpar/exames/Teste_CP_exemplo_resoluÃ§Ã£o.pdf",
                   "category": "Exams"
                 },
                 {
@@ -583,10 +583,10 @@ const SITE_DATA = {
                   "category": "Lectures"
                 },
                 {
-                  "name": "Apresentação.pdf",
+                  "name": "ApresentaÃ§Ã£o.pdf",
                   "type": "pdf",
                   "size": "59 KB",
-                  "url": "files/1-ano/1-semestre/fced/teoricas/Apresentação.pdf",
+                  "url": "files/1-ano/1-semestre/fced/teoricas/ApresentaÃ§Ã£o.pdf",
                   "category": "Lectures"
                 },
                 {
@@ -1178,17 +1178,17 @@ const SITE_DATA = {
                   "category": "Lectures"
                 },
                 {
-                  "name": "métodos discretização slides ODE CFronteira.pdf",
+                  "name": "mÃ©todos discretizaÃ§Ã£o slides ODE CFronteira.pdf",
                   "type": "pdf",
                   "size": "1.1 MB",
-                  "url": "files/1-ano/1-semestre/sne/teoricas/métodos discretização slides ODE CFronteira.pdf",
+                  "url": "files/1-ano/1-semestre/sne/teoricas/mÃ©todos discretizaÃ§Ã£o slides ODE CFronteira.pdf",
                   "category": "Lectures"
                 },
                 {
-                  "name": "métodos discretização slides ODE CI.pdf",
+                  "name": "mÃ©todos discretizaÃ§Ã£o slides ODE CI.pdf",
                   "type": "pdf",
                   "size": "1.3 MB",
-                  "url": "files/1-ano/1-semestre/sne/teoricas/métodos discretização slides ODE CI.pdf",
+                  "url": "files/1-ano/1-semestre/sne/teoricas/mÃ©todos discretizaÃ§Ã£o slides ODE CI.pdf",
                   "category": "Lectures"
                 },
                 {
@@ -1199,10 +1199,10 @@ const SITE_DATA = {
                   "category": "Labs"
                 },
                 {
-                  "name": "Enunciado Trab MetDiscretizaçao MCA 2025_2026.pdf",
+                  "name": "Enunciado Trab MetDiscretizaÃ§ao MCA 2025_2026.pdf",
                   "type": "pdf",
                   "size": "111 KB",
-                  "url": "files/1-ano/1-semestre/sne/praticas/Enunciado Trab MetDiscretizaçao MCA 2025_2026.pdf",
+                  "url": "files/1-ano/1-semestre/sne/praticas/Enunciado Trab MetDiscretizaÃ§ao MCA 2025_2026.pdf",
                   "category": "Labs"
                 },
                 {
@@ -2208,12 +2208,17 @@ const SITE_DATA = {
   },
   "calendar": {
     "author": {
-      "name": "João Alves",
+      "name": "JoÃ£o Alves",
       "github": "https://github.com/joaoalves03",
       "toolUrl": "https://mca.jalves.dev/calendar"
     },
     "embedUrl": "https://mca.jalves.dev/calendar",
     "dates": [
+      {
+        "date": "2026-09-09",
+        "label": "Welcome Meeting",
+        "tag": "semester"
+      },
       {
         "date": "2026-09-14",
         "label": "Start of 1st Semester Classes",
@@ -2264,7 +2269,7 @@ const SITE_DATA = {
   "schedule": {
     "toolUrl": "https://mca.jalves.dev/calendar",
     "author": {
-      "name": "João Alves",
+      "name": "JoÃ£o Alves",
       "github": "https://github.com/joaoalves03"
     }
   },
