@@ -2215,6 +2215,11 @@ const SITE_DATA = {
     "embedUrl": "https://mca.jalves.dev/calendar",
     "dates": [
       {
+        "date": "2026-09-09",
+        "label": "Welcome Meeting",
+        "tag": "semester"
+      },
+      {
         "date": "2026-09-14",
         "label": "Start of 1st Semester Classes",
         "tag": "semester"
