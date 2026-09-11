@@ -107,10 +107,10 @@ function scanCourseFiles(courseDirRel) {
         const ext = getExt(entry.name);
         const category = getCategory(relToCourse);
         results.push({
-          name: entry.name,
+          name: entry.name.normalize("NFC"),
           type: ext,
           size: formatSize(stat.size),
-          url: relToRepo,
+          url: relToRepo.normalize("NFC"),
           category: category,
         });
       }

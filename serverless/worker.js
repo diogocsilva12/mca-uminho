@@ -185,7 +185,7 @@ async function handleAdminUploadFiles(request, env, token, data) {
   const uploaded = [];
 
   for (const f of files) {
-    let cleanName = (f.name || "file").replace(/[^a-zA-Z0-9._-]/g, "_");
+    let cleanName = sanitizeFilename(f.name);
     const filePath = `files/${cleanYear}/${cleanSem}/${cleanCourse}/${cleanCat}/${cleanName}`;
 
     const blobSha = await createBlob(f.content, token); // content is base64
@@ -270,7 +270,7 @@ async function handleAdminSaveCalendar(request, env, token, data) {
 
   // Fetch current site-data.js from main
   const fileData = await getFileContent("assets/data/site-data.js", BASE_BRANCH, token);
-  const currentJs = atob(fileData.content.replace(/\s/g, ""));
+  const currentJs = decodeBase64Utf8(fileData.content);
 
   let siteDataObject;
   try {
@@ -295,7 +295,7 @@ async function handleAdminSaveCalendar(request, env, token, data) {
 const SITE_DATA = ${JSON.stringify(siteDataObject, null, 2)};
 `;
 
-  const base64Content = btoa(unescape(encodeURIComponent(updatedContent)));
+  const base64Content = encodeBase64Utf8(updatedContent);
   const commitMsg = `[Admin] Update academic calendar dates (${dates.length} events)`;
 
   await updateFile(
@@ -353,7 +353,7 @@ async function handleFileSubmission(data, token) {
   const uploadedFilePaths = [];
 
   for (const f of files) {
-    let cleanName = (f.name || "file").replace(/[^a-zA-Z0-9._-]/g, "_");
+    let cleanName = sanitizeFilename(f.name);
     const filePath = `files/${cleanYear}/${cleanSem}/${cleanCourse}/${cleanCat}/${cleanName}`;
 
     const blobSha = await createBlob(f.content, token);
@@ -419,7 +419,7 @@ async function handleDateSubmission(data, token) {
   const baseSha = await getMainSha(token);
 
   const fileData = await getFileContent("assets/data/site-data.js", BASE_BRANCH, token);
-  const currentJs = atob(fileData.content.replace(/\s/g, ""));
+  const currentJs = decodeBase64Utf8(fileData.content);
 
   let siteDataObject;
   try {
@@ -452,7 +452,7 @@ async function handleDateSubmission(data, token) {
 const SITE_DATA = ${JSON.stringify(siteDataObject, null, 2)};
 `;
 
-  const base64Content = btoa(unescape(encodeURIComponent(updatedContent)));
+  const base64Content = encodeBase64Utf8(updatedContent);
   const blobSha = await createBlob(base64Content, token);
 
   const treeSha = await createTree(baseSha, [
@@ -648,3 +648,36 @@ async function createPullRequest(title, branch, body, token) {
     token
   );
 }
+
+// ---------------------------------------------------------------------
+// Unicode & UTF-8 Encoding Helpers
+// ---------------------------------------------------------------------
+
+function decodeBase64Utf8(base64Str) {
+  const cleanBase64 = (base64Str || "").replace(/\s/g, "");
+  const binaryString = atob(cleanBase64);
+  const bytes = new Uint8Array(binaryString.length);
+  for (let i = 0; i < binaryString.length; i++) {
+    bytes[i] = binaryString.charCodeAt(i);
+  }
+  return new TextDecoder("utf-8").decode(bytes);
+}
+
+function encodeBase64Utf8(utf8Str) {
+  const bytes = new TextEncoder().encode(utf8Str);
+  let binary = "";
+  const len = bytes.length;
+  const CHUNK_SIZE = 8192;
+  for (let i = 0; i < len; i += CHUNK_SIZE) {
+    binary += String.fromCharCode.apply(null, bytes.subarray(i, Math.min(i + CHUNK_SIZE, len)));
+  }
+  return btoa(binary);
+}
+
+function sanitizeFilename(name) {
+  if (!name || typeof name !== "string") return "file";
+  let clean = name.replace(/[/\\]/g, "_").replace(/[\x00-\x1f\x7f]/g, "").trim();
+  clean = clean.replace(/[^\p{L}\p{N}\p{Pd}._ -]/gu, "_").replace(/^\.+/, "");
+  return clean.normalize("NFC") || "file";
+}
+

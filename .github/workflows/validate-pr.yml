@@ -33,7 +33,10 @@ jobs:
             for (const sem of SITE_DATA.files.years[year]) {
               for (const subj of sem.subjects) {
                 for (const file of subj.files) {
-                  if (!fs.existsSync(file.url)) {
+                  const exists = fs.existsSync(file.url) ||
+                                 fs.existsSync(file.url.normalize('NFC')) ||
+                                 fs.existsSync(file.url.normalize('NFD'));
+                  if (!exists) {
                     console.error('❌ Referenced file missing from repository:', file.url);
                     missing++;
                   }

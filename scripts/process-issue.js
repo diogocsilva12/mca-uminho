@@ -169,7 +169,8 @@ async function main() {
 
     const downloadedFiles = [];
     for (const att of attachments) {
-      let filename = path.basename(att.name).replace(/[^a-zA-Z0-9._-]/g, '_');
+      let rawBase = path.basename(att.name).replace(/[/\\]/g, '_').replace(/[\x00-\x1f\x7f]/g, '').trim();
+      let filename = rawBase.replace(/[^\p{L}\p{N}\p{Pd}._ -]/gu, '_').replace(/^\.+/, '').normalize('NFC');
       if (!filename || filename === '.') filename = 'material.pdf';
 
       const dest = path.join(targetDir, filename);
