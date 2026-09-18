@@ -2170,7 +2170,85 @@ const SITE_DATA = {
               "code": "BSB",
               "name": "Bioinformatics & Systems Biology",
               "description": "Option IV. Computational genomics, high-throughput biological data analysis, and scalable algorithms in bioinformatics.",
-              "files": []
+              "files": [
+                {
+                  "name": "aula3-seqs.pdf",
+                  "type": "pdf",
+                  "size": "6.5 MB",
+                  "url": "files/2-ano/1-semestre/bsb/teoricas/aula3-seqs.pdf",
+                  "category": "Lectures"
+                },
+                {
+                  "name": "aulaM3-1-unsup.pdf",
+                  "type": "pdf",
+                  "size": "1.6 MB",
+                  "url": "files/2-ano/1-semestre/bsb/teoricas/aulaM3-1-unsup.pdf",
+                  "category": "Lectures"
+                },
+                {
+                  "name": "aulaM3-2-chemoinf-unsup.pdf",
+                  "type": "pdf",
+                  "size": "1.5 MB",
+                  "url": "files/2-ano/1-semestre/bsb/teoricas/aulaM3-2-chemoinf-unsup.pdf",
+                  "category": "Lectures"
+                },
+                {
+                  "name": "aulaM3-3-supervised.pdf",
+                  "type": "pdf",
+                  "size": "1.3 MB",
+                  "url": "files/2-ano/1-semestre/bsb/teoricas/aulaM3-3-supervised.pdf",
+                  "category": "Lectures"
+                },
+                {
+                  "name": "aulaM3-4-supervised-p2.pdf",
+                  "type": "pdf",
+                  "size": "3.7 MB",
+                  "url": "files/2-ano/1-semestre/bsb/teoricas/aulaM3-4-supervised-p2.pdf",
+                  "category": "Lectures"
+                },
+                {
+                  "name": "Bioinf-aulaT1.pdf",
+                  "type": "pdf",
+                  "size": "452 KB",
+                  "url": "files/2-ano/1-semestre/bsb/teoricas/Bioinf-aulaT1.pdf",
+                  "category": "Lectures"
+                },
+                {
+                  "name": "Bioinf-aulaT2.pdf",
+                  "type": "pdf",
+                  "size": "654 KB",
+                  "url": "files/2-ano/1-semestre/bsb/teoricas/Bioinf-aulaT2.pdf",
+                  "category": "Lectures"
+                },
+                {
+                  "name": "blast-T.pdf",
+                  "type": "pdf",
+                  "size": "3.2 MB",
+                  "url": "files/2-ano/1-semestre/bsb/teoricas/blast-T.pdf",
+                  "category": "Lectures"
+                },
+                {
+                  "name": "MSA_FA-T2023.pdf",
+                  "type": "pdf",
+                  "size": "621 KB",
+                  "url": "files/2-ano/1-semestre/bsb/teoricas/MSA_FA-T2023.pdf",
+                  "category": "Lectures"
+                },
+                {
+                  "name": "Proteomics_2023.pdf",
+                  "type": "pdf",
+                  "size": "4.0 MB",
+                  "url": "files/2-ano/1-semestre/bsb/teoricas/Proteomics_2023.pdf",
+                  "category": "Lectures"
+                },
+                {
+                  "name": "s3_5_omics.pdf",
+                  "type": "pdf",
+                  "size": "1.6 MB",
+                  "url": "files/2-ano/1-semestre/bsb/teoricas/s3_5_omics.pdf",
+                  "category": "Lectures"
+                }
+              ]
             },
             {
               "code": "CR",
